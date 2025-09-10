@@ -1,0 +1,95 @@
+*,
+*:before,
+*:after {
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #ffffff; /* білий фон сторінки */
+    color: #222222; /* темний текст */
+}
+
+/* Контейнер */
+.container {
+    padding: 9px 12px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+/* Поля вводу */
+input[type=text],
+input[type=password],
+input[type=email] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    background: #f0f0f0;
+    color: #222;
+}
+
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=email]:focus {
+    background-color: #e0e0e0;
+    outline: none;
+}
+
+/* Горизонтальна лінія */
+hr {
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+/* Кнопка */
+.registerbtn {
+    background-color: #333333;
+    color: white;
+    padding: 16px 18px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.95;
+    transition: background-color 0.3s ease;
+}
+
+.registerbtn:hover {
+    background-color: #555555;
+}
+
+/* Посилання */
+a {
+    color: #333;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #000;
+}
+
+/* Секція "signin" */
+.signin {
+    background-color: #eeeeee;
+    text-align: center;
+    color: #333;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Радіокнопки */
+input[type=radio] {
+    margin-right: 5px;
+}
+
+/* Заголовки і мітки */
+h1, p, label, b {
+    color: #111111;
+}
+
