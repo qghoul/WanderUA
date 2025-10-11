@@ -289,7 +289,7 @@ public class AdvertisementController {
             }
 
             Map<String, String> response = new HashMap<>();
-            response.put("message", "Функція видалення буде реалізована пізніше");
+            response.put("message", "Функція видалення буде реалізована пізніше"); //TO DO
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

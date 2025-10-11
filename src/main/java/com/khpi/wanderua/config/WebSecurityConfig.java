@@ -57,6 +57,12 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/advertisements/**")
                         .hasAnyAuthority(RoleConstants.ROLE_BUSINESS, RoleConstants.ROLE_ADMIN)
 
+                        // API reviews - GET fot all users, POST - checked on back-end (permit for authenticated)
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/reviews/**").permitAll() // may be should be .authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+
                         .requestMatchers("/login", "/registration").permitAll()
                         .requestMatchers(HttpMethod.POST, "/login", "/registration").permitAll()
 

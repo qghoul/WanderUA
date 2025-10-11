@@ -34,6 +34,7 @@ public class Review {
     @JoinColumn(name = "advertisement_id")
     private Advertisement advertisement;
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ReviewImage> images = new ArrayList<>();
     @Min(1)
     @Max(5)
