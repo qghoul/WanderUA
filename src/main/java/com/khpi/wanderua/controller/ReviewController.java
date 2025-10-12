@@ -1,6 +1,7 @@
 package com.khpi.wanderua.controller;
 
 import com.khpi.wanderua.dto.ReviewDTO;
+import com.khpi.wanderua.entity.Review;
 import com.khpi.wanderua.entity.User;
 import com.khpi.wanderua.enums.GoWithOptions;
 import com.khpi.wanderua.service.ReviewService;
@@ -20,6 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 @Slf4j
@@ -31,8 +34,16 @@ public class ReviewController {
 
     @GetMapping("/advertisement/{advertisementId}") //used now for review display
     public ResponseEntity<List<ReviewDTO>> getReviewsByAdvertisement(
-            @PathVariable Long advertisementId) {
-        List<ReviewDTO> reviews = reviewService.getReviewsByAdvertisementId(advertisementId);
+            @PathVariable Long advertisementId,
+            @RequestParam(defaultValue = "useful") String sort) {
+
+        List<ReviewDTO> reviews;
+        if("date".equals(sort)){
+            reviews  = reviewService.getReviewsDTOByAdvertisementIdSortedByDate(advertisementId, getCurrentUserId());
+        }
+        else {
+            reviews = reviewService.getReviewsDTOByAdvertisementId(advertisementId, getCurrentUserId());
+        }
         return ResponseEntity.ok(reviews);
     }
     @GetMapping("/advertisement/{advertisementId}/paged") //need to update front-end to implement pageable review display
@@ -41,7 +52,7 @@ public class ReviewController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<ReviewDTO> reviews = reviewService.getReviewsByAdvertisementId(advertisementId, pageable);
+        Page<ReviewDTO> reviews = reviewService.getReviewsDTOByAdvertisementId(advertisementId, getCurrentUserId(), pageable);
         return ResponseEntity.ok(reviews);
     }
 
@@ -108,7 +119,7 @@ public class ReviewController {
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewDTO> getReview(@PathVariable Long reviewId) {
         try {
-            ReviewDTO review = reviewService.getReviewById(reviewId);
+            ReviewDTO review = reviewService.getReviewById(reviewId, getCurrentUserId());
             return ResponseEntity.ok(review);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
@@ -125,10 +136,17 @@ public class ReviewController {
 
             reviewService.deleteReview(reviewId, userId);
             return ResponseEntity.ok(Map.of("message", "Відгук видалено"));
+
         } catch (IllegalStateException e) {
+            log.warn("Authorization error: {}", e.getMessage());
             return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Помилка видалення відгуку"));
+            log.error("Error deleting review", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Помилка видалення відгуку: " + e.getMessage()));
         }
     }
 
@@ -142,8 +160,16 @@ public class ReviewController {
 
             reviewService.markReviewAsUseful(reviewId, userId);
             return ResponseEntity.ok(Map.of("message", "Відгук відмічено як корисний"));
+        } catch (IllegalStateException e) {
+            log.warn("State error: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Помилка оновлення відгуку"));
+            log.error("Error marking review as useful", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Помилка оновлення відгуку: " + e.getMessage()));
         }
     }
 
@@ -158,8 +184,12 @@ public class ReviewController {
             reviewService.unmarkReviewAsUseful(reviewId, userId);
             return ResponseEntity.ok(Map.of("message", "Відмітку корисності знято"));
 
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Помилка оновлення відгуку"));
+            log.error("Error unmarking review as useful", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Помилка оновлення відгуку"));
         }
     }
 
@@ -177,6 +207,33 @@ public class ReviewController {
 
         } catch (Exception e) {
             log.error("Error getting useful status", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "Помилка"));
+        }
+    }
+
+    @GetMapping("/advertisement/{advertisementId}/useful-status")
+    public ResponseEntity<?> getUsefulStatusForAdvertisement(@PathVariable Long advertisementId) {
+        log.info("Getting useful statuses for advertisement {}", advertisementId);
+        try {
+            Long userId = getCurrentUserId();
+
+            if (userId == null) {
+                log.info("User not authenticated, returning empty statuses");
+                return ResponseEntity.ok(Map.of("statuses", Map.of()));
+            }
+
+            List<Review> reviews = reviewService.getReviewsByAdvertisementId(advertisementId);
+            List<Long> reviewIds = reviews.stream()
+                    .map(Review::getId)
+                    .collect(Collectors.toList());
+
+            Map<Long, Boolean> statuses = reviewService.getUserUsefulStatusForReviews(reviewIds, userId);
+
+            log.info("Returning statuses for {} reviews", statuses.size());
+            return ResponseEntity.ok(Map.of("statuses", statuses));
+
+        } catch (Exception e) {
+            log.error("Error getting useful statuses", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Помилка"));
         }
     }

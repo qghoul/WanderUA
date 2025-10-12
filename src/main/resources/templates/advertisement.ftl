@@ -205,7 +205,7 @@
       cursor: pointer;
     }
 
-    .usefulButton, .complaintButtonReview {
+    .usefulButton, .complaintButtonReview, .deleteButtonReview {
       padding: 5px 10px;
       margin-right: 10px;
       border: 1px solid #ddd;
@@ -214,10 +214,16 @@
       cursor: pointer;
       font-size: 12px;
       color: black;
+      transition: all 0.3s ease;
     }
+    .deleteButtonReview:hover {background-color: pink;}
 
     .usefulButton:hover, .complaintButtonReview:hover {
       background-color: #f0f0f0;
+    }
+    .usefulButton.marked {
+      background-color: lightgreen;
+      border-color: #4CAF50;
     }
     @media (max-width: 768px) {
       .addContainer {
@@ -313,6 +319,13 @@
 
       <div class="reviews-section">
         <h2>Відгуки</h2>
+        <div class="reviews-sort">
+          <label for="sortReviews">Сортувати:</label>
+          <select id="sortReviews" onchange="onSortChange()">
+            <option value="useful">За популярністю</option>
+            <option value="date">За датою створення</option>
+          </select>
+        </div>
         <div id="reviews-container">
 
         </div>
@@ -351,7 +364,7 @@
 
       <div class="form-group">
         <label for="goWith">З ким відвідували:</label>
-        <select id="goWith" name="goWith">
+        <select id="goWith" name="goWith" required>
           <option value="">Оберіть варіант</option>
           <option value="SOLO">Один/одна</option>
           <option value="COUPLE">Пара</option>
@@ -485,15 +498,64 @@
     document.title = data.title || 'Деталі оголошення';
   }
 
+  // global variable for SortType
+  let currentSortType = 'useful';
+
+  function onSortChange() {
+    const sortSelect = document.getElementById('sortReviews');
+    currentSortType = sortSelect.value;
+
+    console.log('Sort changed to:', currentSortType);
+
+    const advertisementId = getAdvertisementIdFromUrl();
+    loadReviews(advertisementId);
+  }
+
   async function loadReviews(advertisementId) {
     try {
-      const response = await fetch(`/api/reviews/advertisement/` + advertisementId); //
-      if (response.ok) {
-        const reviews = await response.json();
-        displayReviews(reviews);
+      const url = `/api/reviews/advertisement/` + advertisementId +`?sort=` + currentSortType;
+      console.log('Fetching reviews from:', url);
+
+      const reviewsResponse = await fetch(url);
+
+      if (!reviewsResponse.ok) {
+        console.error('Failed to load reviews');
+        return;
       }
-    } catch (error) {
+        const reviews = await reviewsResponse.json();
+        console.log('Reviews received:', reviews.length);
+
+        // upload statuses by single request
+        const statusResponse = await fetch(`/api/reviews/advertisement/${advertisementId}/useful-status`);
+        const statusData = await statusResponse.json();
+        const statuses = statusData.statuses || {};
+
+        // Add status to every review
+        const reviewsWithStatus = reviews.map(review => ({
+          ...review,
+          markedByCurrentUser: statuses[review.id] || false
+        }));
+
+        displayReviews(reviewsWithStatus);
+      }
+      catch (error) {
       console.error('Error loading reviews:', error);
+    }
+  }
+  async function checkIfMarkedAsUseful(reviewId) {
+    try {
+      const response = await fetch(`/api/reviews/`+ reviewId + `/useful/status`);
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.markedAsUseful;
+      }
+
+      // if user don't authenticated
+      return false;
+    } catch (error) {
+      console.error('Error checking useful status:', error);
+      return false;
     }
   }
   <#noparse>
@@ -505,26 +567,41 @@
       return;
     }
 
-    container.innerHTML = reviews.map(review => `
+    container.innerHTML = reviews.map(review => {
+      const isMarked = review.markedByCurrentUser;
+      const buttonClass = isMarked ? 'usefulButton marked' : 'usefulButton';
+      const buttonText = isMarked ? 'Відмічено' : 'Корисно';
+      const buttonOnClick = isMarked
+              ? `unmarkReviewAsUseful(${review.id})`
+              : `markReviewAsUseful(${review.id})`;
+      const deleteButton = review.isAuthor
+              ? `<button class="deleteButtonReview" onclick="deleteReview(${review.id})">Видалити</button>`
+              : '';
+
+      return `
       <div class="review">
         <div class="review-left">
           <p class="nickname">${review.username || 'Анонім'}</p>
           <div class="review-stars">${generateStars(review.rating)}</div>
           ${review.dateDisplay ? `<p class="visit-date">Дата візиту <b>${review.dateDisplay}</b></p>` : ''}
-  ${review.goWithDisplay ? `<p class="visit-type">Тип візиту <b>${review.goWithDisplay}</b></p>` : ''}
+          ${review.goWithDisplay ? `<p class="visit-type">Тип візиту <b>${review.goWithDisplay}</b></p>` : ''}
         </div>
         <div class="review-right">
           ${review.title ? `<h3 class="review-title">${review.title}</h3>` : ''}
-  ${review.comment ? `<p class="review-text">${review.comment}</p>` : ''}
-  ${review.imageUrls && review.imageUrls.length > 0 ?
-    `<div class="review-photos">
-      ${review.imageUrls.map(url => `<img src="${url}" alt="Фото відгуку" onclick="openImageModal('${url}')">`).join('')}
-  </div>` : ''}
-  <button class="usefulButton" onclick="markReviewAsUseful(${review.id})">Корисно (${review.usefulScore || 0})</button>
-  <button class="complaintButtonReview" onclick="reportAdvertisement()">Поскаржитись</button>
-  </div>
-  </div>
-  `).join('');
+          ${review.comment ? `<p class="review-text">${review.comment}</p>` : ''}
+          ${review.imageUrls && review.imageUrls.length > 0 ?
+              `<div class="review-photos">
+              ${review.imageUrls.map(url => `<img src="${url}" alt="Фото відгуку" onclick="openImageModal('${url}')">`).join('')}
+            </div>` : ''}
+          <button class="${buttonClass}" onclick="${buttonOnClick}">
+            ${buttonText} (${review.usefulScore || 0})
+          </button>
+           ${deleteButton}
+          <button class="complaintButtonReview" onclick="reportReview(${review.id})">Поскаржитись</button>
+        </div>
+      </div>
+    `;
+    }).join('');
   }
   </#noparse>
 
@@ -931,6 +1008,51 @@
       alert('Помилка відправки запиту');
     }
   }
+  async function unmarkReviewAsUseful(reviewId) {
+    try {
+      const response = await fetch(`/api/reviews/` + reviewId + `/useful`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        console.log('Review unmarked as useful successfully');
+        const advertisementId = getAdvertisementIdFromUrl();
+        await loadReviews(advertisementId);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Помилка');
+      }
+    } catch (error) {
+      console.error('Error unmarking review as useful:', error);
+      alert('Помилка відправки запиту');
+    }
+  }
+
+  async function deleteReview(reviewId) {
+    if (!confirm('Ви впевнені, що хочете видалити цей відгук?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/reviews/` + reviewId, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        console.log('Review deleted successfully');
+        alert('Відгук успішно видалено');
+        const advertisementId = getAdvertisementIdFromUrl();
+        await loadReviews(advertisementId);
+        await loadAdvertisementData();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Помилка видалення відгуку');
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      alert('Помилка видалення відгуку');
+    }
+  }
 
   function goBack() {
     if (document.referrer) {
@@ -945,10 +1067,6 @@
     alert('Функція збереження в ідею подорожі буде реалізована пізніше');
   }
 
- /* function openReviewModal() {
-    // TODO: Реализовать модальное окно для отзывов
-    alert('Функція залишення відгуків буде реалізована пізніше');
-  } */
 
   function reportAdvertisement() {
     // TODO: Реализовать жалобы на объявления

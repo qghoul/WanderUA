@@ -39,6 +39,8 @@ public class ReviewDTO {
 
     private Boolean markedAsUsefulByCurrentUser;
 
+    private Boolean isAuthor;
+
     // Display helper methods
     public String getGoWithDisplay() {
         if (goWith == null) return null;

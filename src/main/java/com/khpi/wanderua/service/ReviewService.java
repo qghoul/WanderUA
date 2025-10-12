@@ -12,9 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,15 +30,24 @@ public class ReviewService {
     private final ImageService imageService;
     private final ReviewUsefulRepository reviewUsefulRepository;
 
-    public List<ReviewDTO> getReviewsByAdvertisementId(Long advertisementId) {
+    public List<ReviewDTO> getReviewsDTOByAdvertisementId(Long advertisementId, Long currentUserId) {
         List<Review> reviews = reviewRepository.findByAdvertisementIdOrderByUsefulScoreDesc(advertisementId);
         return reviews.stream()
-                .map(this::convertToDTO)
+                .map(review -> convertToDTO(review, currentUserId))
                 .collect(Collectors.toList());
     }
-    public Page<ReviewDTO> getReviewsByAdvertisementId(Long advertisementId, Pageable pageable) {
+    public List<ReviewDTO> getReviewsDTOByAdvertisementIdSortedByDate(Long advertisementId, Long currentUserId) {
+        List<Review> reviews = reviewRepository.findByAdvertisementIdOrderByDateDesc(advertisementId);
+        return reviews.stream()
+                .map(review -> convertToDTO(review, currentUserId))
+                .collect(Collectors.toList());
+    }
+    public List<Review> getReviewsByAdvertisementId(Long advertisementId) {
+        return reviewRepository.findByAdvertisementIdOrderByUsefulScoreDesc(advertisementId);
+    }
+    public Page<ReviewDTO> getReviewsDTOByAdvertisementId(Long advertisementId,  Long currentUserId, Pageable pageable) {
         Page<Review> reviews = reviewRepository.findByAdvertisementIdOrderByDateDesc(advertisementId, pageable);
-        return reviews.map(this::convertToDTO);
+        return reviews.map(review -> convertToDTO(review, currentUserId));
     }
 
     @Transactional
@@ -77,13 +90,13 @@ public class ReviewService {
 
         updateAdvertisementRating(reviewDTO.getAdvertisementId());
 
-        return convertToDTO(review);
+        return convertToDTO(review, userId);
     }
 
-    public ReviewDTO getReviewById(Long reviewId) {
+    public ReviewDTO getReviewById(Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Відгук не знайдено"));
-        return convertToDTO(review);
+        return convertToDTO(review, userId);
     }
 
     @Transactional
@@ -91,14 +104,13 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Відгук не знайдено"));
 
-        // Check if user owns this review or is admin
+        // Check if user owns this review
         if (!review.getUser().getId().equals(userId)) {
             throw new IllegalStateException("Ви не можете видалити цей відгук");
         }
 
         Long advertisementId = review.getAdvertisement().getId();
 
-        // Delete review images
         List<String> imageNames = review.getImages().stream()
                 .map(ReviewImage::getName)
                 .toList();
@@ -106,7 +118,6 @@ public class ReviewService {
 
         reviewRepository.delete(review);
 
-        // Update advertisement rating
         updateAdvertisementRating(advertisementId);
     }
 
@@ -114,29 +125,57 @@ public class ReviewService {
     public void markReviewAsUseful(Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Відгук не знайдено"));
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Користувача не знайдено"));
+
         if (reviewUsefulRepository.existsByReviewIdAndUserId(reviewId, userId)) {
             throw new IllegalStateException("Ви вже відмітили цей відгук як корисний");
         }
+
         ReviewUseful reviewUseful = ReviewUseful.builder()
                 .review(review)
                 .user(user)
                 .build();
+
         reviewUsefulRepository.save(reviewUseful);
         reviewRepository.incrementUsefulScore(reviewId);
+        log.info("Review {} marked as useful by user {}", reviewId, userId);
     }
     @Transactional
     public void unmarkReviewAsUseful(Long reviewId, Long userId) {
         if (!reviewUsefulRepository.existsByReviewIdAndUserId(reviewId, userId)) {
             throw new IllegalStateException("Ви не відмічали цей відгук як корисний");
         }
+
         reviewUsefulRepository.deleteByReviewIdAndUserId(reviewId, userId);
         reviewRepository.decrementUsefulScore(reviewId);
+        log.info("Review {} unmarked as useful by user {}", reviewId, userId);
     }
 
     public boolean hasUserMarkedAsUseful(Long reviewId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
         return reviewUsefulRepository.existsByReviewIdAndUserId(reviewId, userId);
+    }
+
+    public Map<Long, Boolean> getUserUsefulStatusForReviews(List<Long> reviewIds, Long userId) {
+        if (userId == null || reviewIds == null || reviewIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ReviewUseful> usefulMarks = reviewUsefulRepository.findByReviewIdInAndUserId(reviewIds, userId);
+
+        Set<Long> markedReviewIds = usefulMarks.stream()
+                .map(ru -> ru.getReview().getId())
+                .collect(Collectors.toSet());
+
+        return reviewIds.stream()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        markedReviewIds::contains
+                ));
     }
 
     public boolean canUserReview(Long userId, Long advertisementId) {
@@ -155,10 +194,18 @@ public class ReviewService {
 
         advertisementRepository.save(advertisement);
     }
-    private ReviewDTO convertToDTO(Review review) {
+
+    public List<Review> findByAdvertisementId(Long advertisementId) {
+        return reviewRepository.findByAdvertisementIdOrderByUsefulScoreDesc(advertisementId);
+    }
+
+
+    private ReviewDTO convertToDTO(Review review, Long currentUserId) {
         List<String> imageUrls = review.getImages().stream()
                 .map(image -> "/images/reviews/" + image.getName())
                 .collect(Collectors.toList());
+
+        boolean isAuthor = currentUserId != null && currentUserId.equals(review.getUser().getId());
 
         return ReviewDTO.builder()
                 .id(review.getId())
@@ -171,6 +218,7 @@ public class ReviewService {
                 .usefulScore(review.getUsefulScore())
                 .imageUrls(imageUrls)
                 .advertisementId(review.getAdvertisement().getId())
+                .isAuthor(isAuthor)
                 .build();
     }
 }
