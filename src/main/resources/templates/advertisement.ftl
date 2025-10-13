@@ -225,6 +225,77 @@
       background-color: lightgreen;
       border-color: #4CAF50;
     }
+    .product-image .carouselForAdvPage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    .product-image .carouselForAdvPage img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .product-image .carouselForAdvPage img.active {
+      opacity: 1;
+    }
+
+    .product-image .carousel-controls-for-adv-page {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .product-image .carouselForAdvPage .arrowForAdvPage {
+      pointer-events: all;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 24px;
+      border-radius: 4px;
+      margin: 0 10px;
+      transition: background-color 0.3s;
+    }
+
+    .product-image .carouselForAdvPage .arrowForAdvPage:hover {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .product-image .indicators {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .product-image .indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .product-image .indicator.active {
+      background-color: white;
+    }
     @media (max-width: 768px) {
       .addContainer {
         flex-direction: column;
@@ -288,7 +359,8 @@
           <div class="creation-date" id="creation-date-display" style="display: none;">
             Дата створення: <span id="creation-date-value"></span>
           </div>
-          <img id="main-image" alt="Зображення оголошення">
+          <div class="carouselForAdvPage" id="main-carousel">
+          </div>
         </div>
 
         <div class="advertDetails">
@@ -331,6 +403,19 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="modal image-modal">
+  <span class="close-image" onclick="closeImageModal()">&times;</span>
+  <div class="image-modal-content">
+    <img id="modalImage" src="" alt="Фото відгуку">
+    <div class="image-modal-nav">
+      <button class="nav-button prev" onclick="previousImage()" id="prevBtn">&#10094;</button>
+      <button class="nav-button next" onclick="nextImage()" id="nextBtn">&#10095;</button>
+    </div>
+    <div class="image-counter" id="imageCounter"></div>
   </div>
 </div>
 
@@ -477,12 +562,6 @@
     displayRating(data.reviewAvgRating, data.ratingsCount);
 
     setupMainImage(data.imageUrls);
-    function setupMainImage(imageUrls) {
-      const mainImage = document.getElementById('main-image');
-
-      mainImage.src = imageUrls[0];
-      mainImage.alt = 'Зображення оголошення';
-    }
 
     displayWorkingHours(data);
 
@@ -496,6 +575,101 @@
     document.getElementById('views-count').textContent = data.views || 0;
 
     document.title = data.title || 'Деталі оголошення';
+  }
+
+  function setupMainImage(imageUrls) {
+    const carousel = document.getElementById('main-carousel');
+    if (!imageUrls || imageUrls.length === 0) {
+      carousel.innerHTML = '<img src="/images/no-image.jpg" alt="Зображення відсутнє">';
+      return;
+    }
+    carousel.innerHTML = '';
+    imageUrls.forEach((url, index) => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = `Зображення оголошення` + (index + 1);
+      if (index === 0) img.classList.add('active');
+      carousel.appendChild(img);
+    });
+    // Add controls if more than one image
+    if (imageUrls.length > 1) {
+      const controls = document.createElement('div');
+      controls.className = 'carousel-controls-for-adv-page';
+      controls.innerHTML = `
+      <button class="arrowForAdvPage prev" onclick="stopPropagation()">‹</button>
+      <button class="arrowForAdvPage next" onclick="stopPropagation()">›</button>
+        `;
+      carousel.appendChild(controls);
+
+      // Add indicators
+      const indicatorsContainer = document.createElement('div');
+      indicatorsContainer.className = 'indicators';
+      imageUrls.forEach((_, index) => {
+        const indicator = document.createElement('div');
+        indicator.className = 'indicator' + (index === 0 ? ' active' : '');
+        indicatorsContainer.appendChild(indicator);
+      });
+      carousel.appendChild(indicatorsContainer);
+
+      // Initialize carousel functionality
+      initMainCarousel(imageUrls.length);
+    }
+
+    carousel.addEventListener('click', () => {
+      if (imageUrls && imageUrls.length > 0) {
+        const currentImage = carousel.querySelector('img.active');
+        const currentIndex = Array.from(carousel.querySelectorAll('img')).indexOf(currentImage);
+        openImageModal(imageUrls[currentIndex], imageUrls);
+      }
+    });
+  }
+
+  function initMainCarousel(imageCount) {
+    const carousel = document.getElementById('main-carousel');
+    const images = carousel.querySelectorAll('img');
+    const prevBtn = carousel.querySelector('.prev');
+    const nextBtn = carousel.querySelector('.next');
+    const indicators = carousel.querySelectorAll('.indicator');
+
+    let current = 0;
+
+    function showImage(index) {
+      images[current].classList.remove('active');
+      indicators[current].classList.remove('active');
+      current = index;
+      images[current].classList.add('active');
+      indicators[current].classList.add('active');
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showImage((current - 1 + imageCount) % imageCount);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showImage((current + 1) % imageCount);
+      });
+    }
+
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showImage(index);
+      });
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        showImage((current - 1 + imageCount) % imageCount);
+      } else if (e.key === 'ArrowRight') {
+        showImage((current + 1) % imageCount);
+      }
+    });
   }
 
   // global variable for SortType
@@ -578,6 +752,8 @@
               ? `<button class="deleteButtonReview" onclick="deleteReview(${review.id})">Видалити</button>`
               : '';
 
+      const imageUrlsJson = review.imageUrls ? JSON.stringify(review.imageUrls) : '[]';
+
       return `
       <div class="review">
         <div class="review-left">
@@ -591,7 +767,12 @@
           ${review.comment ? `<p class="review-text">${review.comment}</p>` : ''}
           ${review.imageUrls && review.imageUrls.length > 0 ?
               `<div class="review-photos">
-              ${review.imageUrls.map(url => `<img src="${url}" alt="Фото відгуку" onclick="openImageModal('${url}')">`).join('')}
+              ${review.imageUrls.map((url, index) =>
+                      `<img src="${url}"
+                      alt="Фото відгуку ${index + 1}"
+                      onclick='openImageModal("${url}", ${imageUrlsJson})'
+                      title="Натисніть для перегляду">`
+              ).join('')}
             </div>` : ''}
           <button class="${buttonClass}" onclick="${buttonOnClick}">
             ${buttonText} (${review.usefulScore || 0})
@@ -1053,6 +1234,96 @@
       alert('Помилка видалення відгуку');
     }
   }
+
+  // Global variables for image gallery
+  let currentImageIndex = 0;
+  let currentImageGallery = [];
+
+  // Открытие модального окна с изображением
+  function openImageModal(imageUrl, galleryUrls = null) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+
+    // Если передан массив изображений, используем его для галереи
+    if (galleryUrls && Array.isArray(galleryUrls)) {
+      currentImageGallery = galleryUrls;
+      currentImageIndex = galleryUrls.indexOf(imageUrl);
+    } else {
+      // Если передано одно изображение
+      currentImageGallery = [imageUrl];
+      currentImageIndex = 0;
+    }
+
+    updateModalImage();
+    modal.style.display = 'block';
+
+    // Блокируем прокрутку страницы
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    currentImageGallery = [];
+    currentImageIndex = 0;
+  }
+
+  function updateModalImage() {
+    const modalImage = document.getElementById('modalImage');
+    const imageCounter = document.getElementById('imageCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    modalImage.src = currentImageGallery[currentImageIndex];
+
+    if (currentImageGallery.length > 1) {
+      imageCounter.textContent = currentImageIndex + 1;
+      imageCounter.style.display = 'block';
+    } else {
+      imageCounter.style.display = 'none';
+    }
+
+    if (currentImageGallery.length > 1) {
+      prevBtn.style.display = 'block';
+      nextBtn.style.display = 'block';
+
+      prevBtn.disabled = currentImageIndex === 0;
+      nextBtn.disabled = currentImageIndex === currentImageGallery.length - 1;
+    } else {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+    }
+  }
+
+  function previousImage() {
+    if (currentImageIndex > 0) {
+      currentImageIndex--;
+      updateModalImage();
+    }
+  }
+
+  function nextImage() {
+    if (currentImageIndex < currentImageGallery.length - 1) {
+      currentImageIndex++;
+      updateModalImage();
+    }
+  }
+
+  // keyboard listener
+  document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('imageModal');
+
+    if (modal.style.display === 'block') {
+      if (e.key === 'Escape') {
+        closeImageModal();
+      } else if (e.key === 'ArrowLeft') {
+        previousImage();
+      } else if (e.key === 'ArrowRight') {
+        nextImage();
+      }
+    }
+  });
 
   function goBack() {
     if (document.referrer) {
