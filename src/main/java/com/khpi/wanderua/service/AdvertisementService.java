@@ -9,7 +9,7 @@ import com.khpi.wanderua.repository.AdvertisementRepository;
 import com.khpi.wanderua.repository.ThemeRepository;
 import com.khpi.wanderua.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -489,7 +490,7 @@ public class AdvertisementService {
             String advertType = mapCategoryToAdvertType(category);
             advertisements = advertisementRepository.findByAdvertisementType(advertType, pageable);
         } else {
-            advertisements = advertisementRepository.findAll(pageable);
+            advertisements = advertisementRepository.findByIsActiveTrue(pageable);
         }
 
         return advertisements.map(this::mapToResponse);

@@ -15,13 +15,13 @@ import java.util.Optional;
 @Repository
 public interface ReviewRepository extends JpaRepository <Review, Long> {
     // Find all reviews for a specific advertisement by date (is using now)
-    List<Review> findByAdvertisementIdOrderByDateDesc(Long advertisementId);
+    List<Review> findByAdvertisementIdAndIsActiveTrueOrderByDateDesc(Long advertisementId);
 
     // Find all reviews for a specific advertisement by usefulScore (is using now)
-    List<Review> findByAdvertisementIdOrderByUsefulScoreDesc(Long advertisementId);
+    List<Review> findByAdvertisementIdAndIsActiveTrueOrderByUsefulScoreDesc(Long advertisementId);
 
     // Find reviews with pagination for a specific advertisement (for new versions with pageable support)
-    Page<Review> findByAdvertisementIdOrderByDateDesc(Long advertisementId, Pageable pageable);
+    Page<Review> findByAdvertisementIdAndIsActiveTrueOrderByDateDesc(Long advertisementId, Pageable pageable);
 
 
     // Find review by user and advertisement (to prevent duplicate reviews)
@@ -32,16 +32,17 @@ public interface ReviewRepository extends JpaRepository <Review, Long> {
 
     // Count reviews for advertisement
     long countByAdvertisementId(Long advertisementId);
+    long countByAdvertisementIdAndIsActiveTrue(Long advertisementId);
 
     // Calculate average rating for advertisement
-    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.advertisement.id = :advertisementId")
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.advertisement.id = :advertisementId AND r.isActive = true")
     Double findAverageRatingByAdvertisementId(@Param("advertisementId") Long advertisementId);
 
     // Find reviews by user
-    Page<Review> findByUserIdOrderByDateDesc(Long userId, Pageable pageable);
+    Page<Review> findByUserIdAndIsActiveTrueOrderByDateDesc(Long userId, Pageable pageable);
 
     // Find top rated reviews for advertisement
-    Page<Review> findByAdvertisementIdAndRatingGreaterThanEqualOrderByDateDesc(
+    Page<Review> findByAdvertisementIdAndIsActiveTrueAndRatingGreaterThanEqualOrderByDateDesc(
             Long advertisementId, Integer minRating, Pageable pageable);
 
     // Update useful score

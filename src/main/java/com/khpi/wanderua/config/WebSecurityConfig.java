@@ -62,6 +62,11 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/reviews/**").permitAll() // may be should be .authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+                        // API complaints
+                        .requestMatchers(HttpMethod.GET, "/api/complaints/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/complaints/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/complaints/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/complaints/**").authenticated()
 
                         .requestMatchers("/login", "/registration").permitAll()
                         .requestMatchers(HttpMethod.POST, "/login", "/registration").permitAll()

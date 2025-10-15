@@ -7,7 +7,6 @@ import com.khpi.wanderua.repository.RoleRepository;
 import com.khpi.wanderua.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.*;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -171,18 +171,6 @@ public class UserService implements UserDetailsService {
             return false;
         }
     }
-    @PostConstruct
-    public void initRoles() {
-        try {
-            createRoleIfNotExists(RoleConstants.ROLE_USER);
-            createRoleIfNotExists(RoleConstants.ROLE_BUSINESS);
-            createRoleIfNotExists(RoleConstants.ROLE_ADMIN);
-
-            log.info("Roles initialization completed");
-        } catch (Exception e) {
-            log.error("Error initializing roles: ", e);
-        }
-    }
 
     private void createRoleIfNotExists(String roleName) {
         if (roleRepository.findByName(roleName).isEmpty()) {
@@ -238,6 +226,64 @@ public class UserService implements UserDetailsService {
         }
 
         return user;
+    }
+
+    @PostConstruct
+    public void initRoles() {
+        try {
+            createRoleIfNotExists(RoleConstants.ROLE_USER);
+            createRoleIfNotExists(RoleConstants.ROLE_BUSINESS);
+            createRoleIfNotExists(RoleConstants.ROLE_ADMIN);
+
+            //initAdminUser();
+
+            log.info("Roles initialization completed");
+        } catch (Exception e) {
+            log.error("Error initializing roles: ", e);
+        }
+    }
+
+    @PostConstruct
+    public void initAdminUser() {
+        try {
+            String adminEmail = "admin@wanderua.com";
+            User existingAdmin = findUserByEmail(adminEmail);
+
+            if (existingAdmin == null) {
+                log.info("Creating default admin user...");
+
+                User admin = new User();
+                admin.setUsername("admin");
+                admin.setEmail(adminEmail);
+                admin.setPassword(passwordEncoder.encode("admin123")); // Хэшируем пароль
+                admin.setFullName("Системний адміністратор");
+                admin.setEnabled(true);
+                admin.setAccountNonLocked(true);
+                admin.setBusinessRepresentVerify(false);
+
+                // Добавляем роли
+                Set<Role> roles = new HashSet<>();
+
+                Role adminRole = roleRepository.findByName(RoleConstants.ROLE_ADMIN)
+                        .orElseGet(() -> createDefaultRole(RoleConstants.ROLE_ADMIN));
+                roles.add(adminRole);
+
+                Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
+                        .orElseGet(() -> createDefaultRole(RoleConstants.ROLE_USER));
+                roles.add(userRole);
+
+                admin.setRoles(roles);
+
+                userRepository.save(admin);
+                log.info("Default admin user created successfully with email: {}", adminEmail);
+                log.info("⚠️  Admin credentials - Email: {}, Password: admin123", adminEmail);
+            } else {
+                log.debug("Admin user already exists");
+            }
+
+        } catch (Exception e) {
+            log.error("Error creating admin user: ", e);
+        }
     }
 
 }

@@ -52,11 +52,11 @@ public class TourAdvert extends Advertisement {
                       Double popularityScore, String websiteUrl, Boolean familyFriendly,
                       LocalDateTime createdAt, LocalDateTime updatedAt,
                       TourType tourType, Set<Theme> themes, BigDecimal tourPriceUah,
-                      BigDecimal tourPriceUsd, Integer duration) {
+                      BigDecimal tourPriceUsd, Integer duration, boolean isActive) {
         super(id, user, business, images, name, description, city, address, contact,
                 weekdayOpen, weekdayClose, weekendOpen, weekendClose, reviewAvgRating,
                 views, clicks, ratingsCount, popularityScore, websiteUrl, familyFriendly,
-                createdAt, updatedAt);
+                createdAt, updatedAt, isActive);
         this.tourType = tourType;
         this.themes = themes != null ? themes : new HashSet<>();
         this.tourPriceUah = tourPriceUah;

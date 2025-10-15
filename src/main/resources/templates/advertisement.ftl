@@ -477,6 +477,35 @@
   </div>
 </div>
 
+<!-- Complaint Modal -->
+<div id="complaintModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeComplaintModal()">&times;</span>
+    <h2 id="complaintModalTitle">Поскаржитись</h2>
+    <form id="complaintForm">
+      <div class="form-group">
+        <label for="complaintType">Тип скарги: <span style="color: red;">*</span></label>
+        <select id="complaintType" name="type" required>
+          <option value="">Оберіть тип скарги</option>
+          <option value="SPAM">Спам</option>
+          <option value="INAPPROPRIATE_CONTENT">Неприйнятний контент</option>
+          <option value="FRAUD">Шахрайство</option>
+          <option value="OTHER">Інше</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="complaintComment">Коментар (необов'язково):</label>
+        <textarea id="complaintComment" name="comment" maxlength="500" placeholder="Опишіть проблему детальніше..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <button type="submit" class="submit-form" style="width: 100%;">Подати скаргу</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <footer>
   <div class="footer-content">
     <p>Copyright &copy; 2025 WanderUA. All rights reserved.</p>
@@ -1161,7 +1190,6 @@
     }
   });
 
-  // Modal close functionality
   document.querySelector('.close').addEventListener('click', closeReviewModal);
 
   window.addEventListener('click', function(e) {
@@ -1239,17 +1267,14 @@
   let currentImageIndex = 0;
   let currentImageGallery = [];
 
-  // Открытие модального окна с изображением
   function openImageModal(imageUrl, galleryUrls = null) {
     const modal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
 
-    // Если передан массив изображений, используем его для галереи
     if (galleryUrls && Array.isArray(galleryUrls)) {
       currentImageGallery = galleryUrls;
       currentImageIndex = galleryUrls.indexOf(imageUrl);
     } else {
-      // Если передано одно изображение
       currentImageGallery = [imageUrl];
       currentImageIndex = 0;
     }
@@ -1257,7 +1282,6 @@
     updateModalImage();
     modal.style.display = 'block';
 
-    // Блокируем прокрутку страницы
     document.body.style.overflow = 'hidden';
   }
 
@@ -1325,6 +1349,113 @@
     }
   });
 
+  //Complaint Section functions
+  async function reportAdvertisement() {
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) {
+      alert('Для подання скарги необхідно увійти в систему');
+      window.location.href = '/login';
+      return;
+    }
+    openComplaintModal('advertisement', getAdvertisementIdFromUrl());
+  }
+
+  async function reportReview(reviewId) {
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) {
+      alert('Для подання скарги необхідно увійти в систему');
+      window.location.href = '/login';
+      return;
+    }
+    openComplaintModal('review', reviewId);
+  }
+
+  async function checkAuthentication() {
+    try {
+      const response = await fetch('/api/auth/status', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {return false;}
+
+      const data = await response.json();
+
+      return data.authenticated === true;
+
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      return false;
+    }
+  }
+
+  function openComplaintModal(type, targetId) {
+    const modal = document.getElementById('complaintModal');
+    const modalTitle = document.getElementById('complaintModalTitle');
+
+    // Store type and targetId for submission
+    modal.dataset.complaintType = type;
+    modal.dataset.targetId = targetId;
+
+    if (type === 'advertisement') {
+      modalTitle.textContent = 'Поскаржитись на оголошення';
+    } else {
+      modalTitle.textContent = 'Поскаржитись на відгук';
+    }
+
+    modal.style.display = 'block';
+  }
+
+  function closeComplaintModal() {
+    const modal = document.getElementById('complaintModal');
+    modal.style.display = 'none';
+    document.getElementById('complaintForm').reset();
+  }
+
+  document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const modal = document.getElementById('complaintModal');
+    const type = modal.dataset.complaintType;
+    const targetId = modal.dataset.targetId;
+
+    const complaintType = document.getElementById('complaintType').value;
+    const complaintComment = document.getElementById('complaintComment').value;
+
+    if (!complaintType) {
+      alert('Будь ласка, оберіть тип скарги');
+      return;
+    }
+
+    const endpoint = type === 'advertisement'
+            ? `/api/complaints/advertisement/` + targetId
+            : `/api/complaints/review/` + targetId;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: complaintType,
+          comment: complaintComment
+        })
+      });
+
+      if (response.ok) {
+        alert('Скаргу успішно подано!');
+        closeComplaintModal();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Помилка подання скарги');
+      }
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      alert('Помилка відправки скарги');
+    }
+  });
+
   function goBack() {
     if (document.referrer) {
       window.history.back();
@@ -1336,12 +1467,6 @@
   function saveToFavorites() {
     // TODO: Реализовать сохранение в избранное
     alert('Функція збереження в ідею подорожі буде реалізована пізніше');
-  }
-
-
-  function reportAdvertisement() {
-    // TODO: Реализовать жалобы на объявления
-    alert('Функція скарг буде реалізована пізніше');
   }
 
   function showError(message) {

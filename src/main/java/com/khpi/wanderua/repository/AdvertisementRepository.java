@@ -17,18 +17,18 @@ import java.util.Optional;
 public interface AdvertisementRepository
         extends JpaRepository<Advertisement, Long> {
 
-    Page<Advertisement> findAll(Pageable pageable);
+    Page<Advertisement> findByIsActiveTrue(Pageable pageable);
     Advertisement findAdvertisementById(Long id);
     Optional<Advertisement> findById(Long id);
 
-    @Query(value = "SELECT * FROM advertisements WHERE advert_type = :advertType", nativeQuery = true)
+    @Query(value = "SELECT * FROM advertisements WHERE advert_type = :advertType AND is_active = true", nativeQuery = true)
     Page<Advertisement> findByAdvertisementType(@Param("advertType") String advertType, Pageable pageable);
 
 
-    @Query("SELECT a FROM Advertisement a WHERE a.user.id = :userId")
+    @Query("SELECT a FROM Advertisement a WHERE a.user.id = :userId AND a.isActive = true")
     Page<Advertisement> findByUserId(@Param("userId") Long userId, Pageable pageable);
 
-    @Query("SELECT a FROM Advertisement a WHERE LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%'))")
+    @Query("SELECT a FROM Advertisement a WHERE LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')) AND a.isActive = true")
     Page<Advertisement> findByCityContainingIgnoreCase(@Param("city") String city, Pageable pageable);
 
     @Query(value = "SELECT * FROM advertisements " +
@@ -37,55 +37,59 @@ public interface AdvertisementRepository
             "ORDER BY popularity_score DESC",
             countQuery = "SELECT COUNT(*) FROM advertisements " +
                     "WHERE LOWER(city) LIKE LOWER(CONCAT('%', :city, '%')) " +
-                    "AND advert_type = :advertType",
+                    "AND advert_type = :advertType AND is_active = true",
             nativeQuery = true)
     Page<Advertisement> findByCityAndAdvertisementType(
             @Param("city") String city,
             @Param("advertType") String advertType,
             Pageable pageable);
 
-    @Query(value = "SELECT MAX(tour_price_uah) FROM advertisements WHERE LOWER(city) LIKE LOWER(CONCAT('%', :city, '%')) AND advert_type = 'TOUR'",
+    @Query(value = "SELECT MAX(tour_price_uah) FROM advertisements WHERE LOWER(city) LIKE LOWER(CONCAT('%', :city, '%')) AND advert_type = 'TOUR' AND is_active = true",
             nativeQuery = true)
     BigDecimal findMaxPriceInCity(@Param("city") String city);
 
-    @Query(value = "SELECT MAX(tour_price_uah) FROM advertisements WHERE advert_type = 'TOUR'",
+    @Query(value = "SELECT MAX(tour_price_uah) FROM advertisements WHERE advert_type = 'TOUR' AND is_active = true",
             nativeQuery = true)
     BigDecimal findMaxPrice();
 
-    @Query(value = "SELECT COUNT(*) FROM advertisements WHERE advert_type = :advertType AND LOWER(city) LIKE LOWER(CONCAT('%', :city, '%'))",
+    @Query(value = "SELECT COUNT(*) FROM advertisements WHERE advert_type = :advertType AND LOWER(city) LIKE LOWER(CONCAT('%', :city, '%')) AND is_active = true",
             nativeQuery = true)
     Long countByAdvertisementTypeAndCity(@Param("advertType") String advertType, @Param("city") String city);
 
-    @Query(value = "SELECT COUNT(*) FROM advertisements WHERE advert_type = :advertType",
+    @Query(value = "SELECT COUNT(*) FROM advertisements WHERE advert_type = :advertType AND is_active = true",
             nativeQuery = true)
     Long countByAdvertisementType(@Param("advertType") String advertType);
 
 
     @Query("SELECT a FROM Advertisement a WHERE " +
             "LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')) " +
+            "AND a.isActive = true " +
             "ORDER BY a.popularityScore DESC, a.views DESC")
     Page<Advertisement> findPopularInCity(@Param("city") String city, Pageable pageable);
 
     @Query("SELECT a FROM Advertisement a WHERE " +
             "LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')) AND " +
             "a.reviewAvgRating > 0 " +
+            "AND a.isActive = true " +
             "ORDER BY a.reviewAvgRating DESC, a.ratingsCount DESC")
     Page<Advertisement> findTopRatedInCity(@Param("city") String city, Pageable pageable);
 
     @Query("SELECT a FROM Advertisement a WHERE " +
             "LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')) " +
+            "AND a.isActive = true " +
             "ORDER BY a.createdAt DESC")
     Page<Advertisement> findNewestInCity(@Param("city") String city, Pageable pageable);
 
     @Query("SELECT t FROM TourAdvert t WHERE " +
             "LOWER(t.city) LIKE LOWER(CONCAT('%', :city, '%')) AND " +
-            "t.tourPriceUah BETWEEN :minPrice AND :maxPrice")
+            "t.tourPriceUah BETWEEN :minPrice AND :maxPrice " +
+            "AND t.isActive = true ")
     Page<Advertisement> findToursByCityAndPriceRange(@Param("city") String city,
                                                      @Param("minPrice") BigDecimal minPrice,
                                                      @Param("maxPrice") BigDecimal maxPrice,
                                                      Pageable pageable);
 
-    @Query("SELECT t FROM TourAdvert t WHERE t.tourPriceUah BETWEEN :minPrice AND :maxPrice")
+    @Query("SELECT t FROM TourAdvert t WHERE t.tourPriceUah BETWEEN :minPrice AND :maxPrice AND t.isActive = true")
     Page<Advertisement> findToursByPriceRange(@Param("minPrice") BigDecimal minPrice,
                                               @Param("maxPrice") BigDecimal maxPrice,
                                               Pageable pageable);
@@ -94,12 +98,14 @@ public interface AdvertisementRepository
             "(:city IS NULL OR LOWER(city) LIKE LOWER(CONCAT('%', :city, '%'))) AND " +
             "(:advertType IS NULL OR advert_type = :advertType) AND " +
             "(:minPrice IS NULL OR tour_price_uah >= :minPrice) AND " +
-            "(:maxPrice IS NULL OR tour_price_uah <= :maxPrice)",
+            "(:maxPrice IS NULL OR tour_price_uah <= :maxPrice) AND " +
+            "is_active = true",
             countQuery = "SELECT COUNT(*) FROM advertisements WHERE " +
                     "(:city IS NULL OR LOWER(city) LIKE LOWER(CONCAT('%', :city, '%'))) AND " +
                     "(:advertType IS NULL OR advert_type = :advertType) AND " +
                     "(:minPrice IS NULL OR tour_price_uah >= :minPrice) AND " +
-                    "(:maxPrice IS NULL OR tour_price_uah <= :maxPrice)",
+                    "(:maxPrice IS NULL OR tour_price_uah <= :maxPrice) AND " +
+                    "is_active = true",
             nativeQuery = true)
     Page<Advertisement> findWithFilters(
             @Param("city") String city,

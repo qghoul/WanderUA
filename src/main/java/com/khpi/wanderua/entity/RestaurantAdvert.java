@@ -33,12 +33,12 @@ public class RestaurantAdvert extends Advertisement {
                             LocalTime weekdayOpen, LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose,
                             Double reviewAvgRating, Integer views, Integer clicks, Integer ratingsCount,
                             Double popularityScore, String websiteUrl, Boolean familyFriendly,
-                            LocalDateTime createdAt, LocalDateTime updatedAt, // ДОБАВЛЕНО
-                            PriceCategory priceCategory, Boolean veganOptions, Boolean halalOptions) {
+                            LocalDateTime createdAt, LocalDateTime updatedAt,
+                            PriceCategory priceCategory, Boolean veganOptions, Boolean halalOptions, boolean isActive) {
         super(id, user, business, images, name, description, city, address, contact,
                 weekdayOpen, weekdayClose, weekendOpen, weekendClose, reviewAvgRating,
                 views, clicks, ratingsCount, popularityScore, websiteUrl, familyFriendly,
-                createdAt, updatedAt);
+                createdAt, updatedAt, isActive);
         this.priceCategory = priceCategory;
         this.veganOptions = veganOptions;
         this.halalOptions = halalOptions;

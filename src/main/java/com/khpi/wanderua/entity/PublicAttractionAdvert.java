@@ -31,12 +31,12 @@ public class PublicAttractionAdvert extends Advertisement{
                                   LocalTime weekdayOpen, LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose,
                                   Double reviewAvgRating, Integer views, Integer clicks, Integer ratingsCount,
                                   Double popularityScore, String websiteUrl, Boolean familyFriendly,
-                                  LocalDateTime createdAt, LocalDateTime updatedAt, // ДОБАВЛЕНО
-                                  Boolean freeVisit) {
+                                  LocalDateTime createdAt, LocalDateTime updatedAt,
+                                  Boolean freeVisit , boolean isActive) {
         super(id, user, business, images, name, description, city, address, contact,
                 weekdayOpen, weekdayClose, weekendOpen, weekendClose, reviewAvgRating,
                 views, clicks, ratingsCount, popularityScore, websiteUrl, familyFriendly,
-                createdAt, updatedAt);
+                createdAt, updatedAt, isActive);
         this.freeVisit = freeVisit;
     }
 }

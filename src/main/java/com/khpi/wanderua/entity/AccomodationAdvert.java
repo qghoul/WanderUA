@@ -33,12 +33,12 @@ public class AccomodationAdvert extends Advertisement {
                               LocalTime weekdayOpen, LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose,
                               Double reviewAvgRating, Integer views, Integer clicks, Integer ratingsCount,
                               Double popularityScore, String websiteUrl, Boolean familyFriendly,
-                              LocalDateTime createdAt, LocalDateTime updatedAt, // ДОБАВЛЕНО
-                              AccomodationType accomodationType, Integer starsQuality) {
+                              LocalDateTime createdAt, LocalDateTime updatedAt,
+                              AccomodationType accomodationType, Integer starsQuality, boolean isActive) {
         super(id, user, business, images, name, description, city, address, contact,
                 weekdayOpen, weekdayClose, weekendOpen, weekendClose, reviewAvgRating,
                 views, clicks, ratingsCount, popularityScore, websiteUrl, familyFriendly,
-                createdAt, updatedAt);
+                createdAt, updatedAt, isActive);
         this.accomodationType = accomodationType;
         this.starsQuality = starsQuality;
     }

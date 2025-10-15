@@ -24,6 +24,7 @@ async function checkAuthStatus() {
 function updateAuthMenu(authData) {
     const loginButton = document.getElementById('login');
     const createAddButton = document.getElementById('createAdd');
+    const forBusinessButton = document.getElementById('forBussines');
 
     if (!loginButton || !createAddButton) {
         console.warn('Auth menu buttons not found');
@@ -34,21 +35,40 @@ function updateAuthMenu(authData) {
         // User is guest
         updateButton(loginButton, 'Увійти', '/login');
         updateButton(createAddButton, 'Зареєструватись', '/registration');
+        if (forBusinessButton) {
+            updateButton(forBusinessButton, 'Інформація для бізнесу', '/forBusiness');
+            //resetButtonStyle(forBusinessButton);
+        }
     } else {
         const userRoles = authData.roles || [];
         const isBusiness = userRoles.includes('ROLE_BUSINESS') || authData.businessVerified;
+        const isAdmin = userRoles.includes('ROLE_ADMIN');
 
-        if (isBusiness) {
+        if (isAdmin) {
+            // Admin
+            updateButton(loginButton, 'Панель адміна', '/admin/dashboard');
+            updateButton(createAddButton, 'Всі оголошення', '/catalog');
+            if (forBusinessButton) {
+                updateButton(forBusinessButton, 'Перегляд скарг', '/complaints');
+                //highlightAdminButton(forBusinessButton);
+            }
+        } else if (isBusiness) {
             // Business represent
             updateButton(loginButton, 'Створити пропозицію', '/advertisements/create');
             updateButton(createAddButton, 'Мої пропозиції', '/api/advertisements/my');
+            if (forBusinessButton) {
+                updateButton(forBusinessButton, 'Інформація для бізнесу', '/forBusiness');
+                //resetButtonStyle(forBusinessButton);
+            }
         } else {
-            // Default user (tourist)
+            // Tourist
             updateButton(loginButton, 'Профіль', '/profile');
-            updateButton(createAddButton, 'Всі пропозиції', '/advertisements');
+            updateButton(createAddButton, 'Всі пропозиції', '/catalog');
+            if (forBusinessButton) {
+                updateButton(forBusinessButton, 'Інформація для бізнесу', '/forBusiness');
+                //resetButtonStyle(forBusinessButton);
+            }
         }
-
-        //addLogoutButton(authData);
     }
 }
 
@@ -109,6 +129,32 @@ async function checkAdvertisementAccess() {
     }
 }
 
+async function checkAdminAccess() {
+    try {
+        const authData = await checkAuthStatus();
+
+        if (!authData.authenticated) {
+            return { isAdmin: false, message: 'Необхідна аутентифікація' };
+        }
+
+        const userRoles = authData.roles || [];
+        const isAdmin = userRoles.includes('ROLE_ADMIN');
+
+        if (!isAdmin) {
+            return {
+                isAdmin: false,
+                message: 'Доступ тільки для адміністраторів'
+            };
+        }
+
+        return { isAdmin: true };
+
+    } catch (error) {
+        console.error('Error checking admin access:', error);
+        return { isAdmin: false, message: 'Помилка перевірки доступу' };
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         const authData = await checkAuthStatus();
@@ -120,6 +166,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             const accessCheck = await checkAdvertisementAccess();
             if (!accessCheck.canCreate) {
                 alert(accessCheck.message);
+                window.location.href = '/main';
+                return;
+            }
+        }
+        // Admin role check
+        if (window.location.pathname.includes('/admin/')) {
+            const adminCheck = await checkAdminAccess();
+            if (!adminCheck.isAdmin) {
+                alert(adminCheck.message);
                 window.location.href = '/main';
                 return;
             }

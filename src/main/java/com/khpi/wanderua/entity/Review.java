@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @EqualsAndHashCode
@@ -55,4 +56,22 @@ public class Review {
     private GoWithOptions goWith;
     @Column(name = "useful_score", nullable = false)
     private Integer usefulScore = 0;
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
+
+    @PrePersist
+    private void onCreate(){
+        if (!this.isActive) {
+            this.isActive = true;
+        }
+    }
+    public List<String> getImageUrls() {
+        if (images == null || images.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return images.stream()
+                .map(ReviewImage::getName)
+                .collect(Collectors.toList());
+    }
 }

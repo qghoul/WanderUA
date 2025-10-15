@@ -31,22 +31,22 @@ public class ReviewService {
     private final ReviewUsefulRepository reviewUsefulRepository;
 
     public List<ReviewDTO> getReviewsDTOByAdvertisementId(Long advertisementId, Long currentUserId) {
-        List<Review> reviews = reviewRepository.findByAdvertisementIdOrderByUsefulScoreDesc(advertisementId);
+        List<Review> reviews = reviewRepository.findByAdvertisementIdAndIsActiveTrueOrderByUsefulScoreDesc(advertisementId);
         return reviews.stream()
                 .map(review -> convertToDTO(review, currentUserId))
                 .collect(Collectors.toList());
     }
     public List<ReviewDTO> getReviewsDTOByAdvertisementIdSortedByDate(Long advertisementId, Long currentUserId) {
-        List<Review> reviews = reviewRepository.findByAdvertisementIdOrderByDateDesc(advertisementId);
+        List<Review> reviews = reviewRepository.findByAdvertisementIdAndIsActiveTrueOrderByDateDesc(advertisementId);
         return reviews.stream()
                 .map(review -> convertToDTO(review, currentUserId))
                 .collect(Collectors.toList());
     }
     public List<Review> getReviewsByAdvertisementId(Long advertisementId) {
-        return reviewRepository.findByAdvertisementIdOrderByUsefulScoreDesc(advertisementId);
+        return reviewRepository.findByAdvertisementIdAndIsActiveTrueOrderByUsefulScoreDesc(advertisementId);
     }
     public Page<ReviewDTO> getReviewsDTOByAdvertisementId(Long advertisementId,  Long currentUserId, Pageable pageable) {
-        Page<Review> reviews = reviewRepository.findByAdvertisementIdOrderByDateDesc(advertisementId, pageable);
+        Page<Review> reviews = reviewRepository.findByAdvertisementIdAndIsActiveTrueOrderByDateDesc(advertisementId, pageable);
         return reviews.map(review -> convertToDTO(review, currentUserId));
     }
 
@@ -184,7 +184,7 @@ public class ReviewService {
 
     private void updateAdvertisementRating(Long advertisementId) {
         Double averageRating = reviewRepository.findAverageRatingByAdvertisementId(advertisementId);
-        Long ratingsCount = reviewRepository.countByAdvertisementId(advertisementId);
+        Long ratingsCount = reviewRepository.countByAdvertisementIdAndIsActiveTrue(advertisementId);
 
         Advertisement advertisement = advertisementRepository.findById(advertisementId)
                 .orElseThrow(() -> new IllegalArgumentException("Оголошення не знайдено"));
@@ -196,7 +196,7 @@ public class ReviewService {
     }
 
     public List<Review> findByAdvertisementId(Long advertisementId) {
-        return reviewRepository.findByAdvertisementIdOrderByUsefulScoreDesc(advertisementId);
+        return reviewRepository.findByAdvertisementIdAndIsActiveTrueOrderByUsefulScoreDesc(advertisementId);
     }
 
 

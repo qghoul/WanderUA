@@ -196,4 +196,8 @@ public class PageController {
         model.addAttribute("currentUser", user);
         return "profile";
     }
+
+    @GetMapping("/complaints")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String complaintCatalog(){ return "complaints-catalog";}
 }

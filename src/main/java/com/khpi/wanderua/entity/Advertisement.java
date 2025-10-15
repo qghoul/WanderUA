@@ -70,6 +70,8 @@ public abstract class Advertisement {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
     public abstract AdvertisementType getAdvertisementType();
     // Init default values
     @PrePersist
@@ -80,5 +82,8 @@ public abstract class Advertisement {
         if (reviewAvgRating == null) reviewAvgRating = 0.0;
         if (popularityScore == null) popularityScore = 0.0;
         if (familyFriendly == null) familyFriendly = true;
+        if (!this.isActive) {
+            this.isActive = true;
+        }
     }
 }
