@@ -24,7 +24,7 @@ async function checkAuthStatus() {
 function updateAuthMenu(authData) {
     const loginButton = document.getElementById('login');
     const createAddButton = document.getElementById('createAdd');
-    const forBusinessButton = document.getElementById('forBussines');
+    const highlitedButton = document.getElementById('mainButton');
 
     if (!loginButton || !createAddButton) {
         console.warn('Auth menu buttons not found');
@@ -35,10 +35,6 @@ function updateAuthMenu(authData) {
         // User is guest
         updateButton(loginButton, 'Увійти', '/login');
         updateButton(createAddButton, 'Зареєструватись', '/registration');
-        if (forBusinessButton) {
-            updateButton(forBusinessButton, 'Інформація для бізнесу', '/forBusiness');
-            //resetButtonStyle(forBusinessButton);
-        }
     } else {
         const userRoles = authData.roles || [];
         const isBusiness = userRoles.includes('ROLE_BUSINESS') || authData.businessVerified;
@@ -46,30 +42,110 @@ function updateAuthMenu(authData) {
 
         if (isAdmin) {
             // Admin
-            updateButton(loginButton, 'Панель адміна', '/admin/dashboard');
-            updateButton(createAddButton, 'Всі оголошення', '/catalog');
-            if (forBusinessButton) {
-                updateButton(forBusinessButton, 'Перегляд скарг', '/complaints');
-                //highlightAdminButton(forBusinessButton);
-            }
+            updateButton(loginButton, 'Запити верифікації', '/admin/dashboard');
+            updateButton(createAddButton, 'Перегляд скарг', '/complaints');
         } else if (isBusiness) {
             // Business represent
-            updateButton(loginButton, 'Створити пропозицію', '/advertisements/create');
-            updateButton(createAddButton, 'Мої пропозиції', '/api/advertisements/my');
-            if (forBusinessButton) {
-                updateButton(forBusinessButton, 'Інформація для бізнесу', '/forBusiness');
-                //resetButtonStyle(forBusinessButton);
-            }
+            createProfileDropdown(loginButton, 'business');
+            updateButton(createAddButton, 'Створити пропозицію', '/advertisements/create');
         } else {
             // Tourist
-            updateButton(loginButton, 'Профіль', '/profile');
-            updateButton(createAddButton, 'Всі пропозиції', '/catalog');
-            if (forBusinessButton) {
-                updateButton(forBusinessButton, 'Інформація для бізнесу', '/forBusiness');
-                //resetButtonStyle(forBusinessButton);
-            }
+            createProfileDropdown(loginButton, 'tourist');
+            updateButton(createAddButton, 'Усі пропозиції', '/catalog');
         }
     }
+}
+
+function createProfileDropdown(buttonElement, userType) {
+    const existingDropdown = buttonElement.querySelector('.profile-dropdown');
+    if (existingDropdown) {
+        existingDropdown.remove();
+    }
+
+    const linkElement = buttonElement.querySelector('a');
+    if (linkElement) {
+        linkElement.textContent = 'Профіль ▾';
+        linkElement.href = '#';
+        linkElement.style.cursor = 'pointer';
+
+        linkElement.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleDropdown(buttonElement);
+        };
+    }
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'profile-dropdown';
+    dropdown.style.display = 'none';
+
+    let menuItems = [];
+    if (userType === 'business') {
+        menuItems = [
+            { text: 'Мої ідеї для подорожей', href: '/my-trips' },
+            { text: 'Мої пропозиції', href: '/api/advertisements/my' },
+            { text: 'Мої відгуки', href: '/my-reviews' },
+            { text: 'Подані скарги', href: '/my-complaints' }
+        ];
+    } else {
+        // Tourist
+        menuItems = [
+            { text: 'Мої ідеї для подорожей', href: '/my-trips' },
+            { text: 'Мої відгуки', href: '/my-reviews' },
+            { text: 'Подані скарги', href: '/my-complaints' }
+        ];
+    }
+
+    menuItems.forEach(item => {
+        const menuItem = document.createElement('a');
+        menuItem.href = item.href;
+        menuItem.textContent = item.text;
+        menuItem.className = 'profile-dropdown-item';
+
+        if (item.href === '/api/advertisements/my') {
+            menuItem.onclick = (e) => {
+                closeAllDropdowns();
+            };
+        } else {
+            menuItem.onclick = () => {
+                closeAllDropdowns();
+            };
+        }
+
+        dropdown.appendChild(menuItem);
+    });
+
+    const logoutItem = document.createElement('a');
+    logoutItem.href = '#';
+    logoutItem.textContent = 'Вийти';
+    logoutItem.className = 'profile-dropdown-item logout-item';
+    logoutItem.onclick = (e) => {
+        e.preventDefault();
+        logout(e);
+    };
+    dropdown.appendChild(logoutItem);
+
+    buttonElement.appendChild(dropdown);
+    buttonElement.style.position = 'relative';
+}
+
+function toggleDropdown(buttonElement) {
+    const dropdown = buttonElement.querySelector('.profile-dropdown');
+    if (!dropdown) return;
+
+    const isCurrentlyOpen = dropdown.style.display === 'block';
+
+    closeAllDropdowns();
+
+    if (!isCurrentlyOpen) {
+        dropdown.style.display = 'block';
+    }
+}
+
+function closeAllDropdowns() {
+    document.querySelectorAll('.profile-dropdown').forEach(dropdown => {
+        dropdown.style.display = 'none';
+    });
 }
 
 function updateButton(buttonElement, text, href) {
@@ -77,6 +153,8 @@ function updateButton(buttonElement, text, href) {
     if (linkElement) {
         linkElement.textContent = text;
         linkElement.href = href;
+        linkElement.onclick = null;
+        linkElement.style.cursor = '';
     }
 }
 
@@ -93,12 +171,10 @@ async function logout(event) {
             window.location.href = '/main';
         } else {
             console.error('Logout failed:', response.status);
-            // Принудительное перенаправление в случае ошибки
             window.location.href = '/logout';
         }
     } catch (error) {
         console.error('Logout error:', error);
-        // Принудительное перенаправление
         window.location.href = '/logout';
     }
 }
@@ -159,6 +235,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         const authData = await checkAuthStatus();
         updateAuthMenu(authData);
+
+        //close dropdown-menu
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#login') && !event.target.closest('.profile-dropdown')) {
+                closeAllDropdowns();
+            }
+        });
 
         if (window.location.pathname.includes('/advertisements/create') ||
             document.getElementById('advertForm')) {
@@ -253,7 +336,7 @@ function displayMyAdvertisements(advertisements) {
         <header>
             <ul class="menu">
                 <div class="leftPart">
-                    <li id="forBussines"><a href="/forBussines">Інформація для бізесу</a></li>
+                    <li id="mainButton"><a href="/forBussines">Інформація для бізесу</a></li>
                     <li><a href="/aboutProject">Про проєкт</a></li>
                     <li><a href="/Tourists">Військовий туризм</a></li>
                     <li><a href="/help">FAQ</a></li>

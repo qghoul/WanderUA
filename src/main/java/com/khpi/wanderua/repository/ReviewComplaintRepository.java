@@ -19,4 +19,6 @@ public interface ReviewComplaintRepository extends JpaRepository<ReviewComplaint
     Optional<ReviewComplaint> findByUserIdAndReviewId(Long userId, Long reviewId);
 
     boolean existsByUserIdAndReviewId(Long userId, Long reviewId);
+
+    List<ReviewComplaint> findByUserId(Long userId);
 }

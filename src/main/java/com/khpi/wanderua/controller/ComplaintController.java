@@ -1,9 +1,6 @@
 package com.khpi.wanderua.controller;
 
-import com.khpi.wanderua.dto.AdvertisementComplaintResponse;
-import com.khpi.wanderua.dto.ComplaintRequest;
-import com.khpi.wanderua.dto.ResolveComplaintRequest;
-import com.khpi.wanderua.dto.ReviewComplaintResponse;
+import com.khpi.wanderua.dto.*;
 import com.khpi.wanderua.entity.User;
 import com.khpi.wanderua.service.ComplaintService;
 import com.khpi.wanderua.service.UserService;
@@ -196,4 +193,57 @@ public class ComplaintController {
             @RequestParam(defaultValue = "all") String status) {
         return ResponseEntity.ok(complaintService.getReviewComplaintsByStatus(status));
     }
+
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyComplaints(Authentication authentication){
+        try {
+            User user = userService.getCurrentUser(authentication);
+            if (user == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Користувача не знайдено"));
+            }
+            Long userId = user.getId();
+            log.info("Fetching complaints for user ID: {}", userId);
+
+            UserComplaintsResponse complaints = complaintService.getUserComplaints(userId);
+            return ResponseEntity.ok(complaints);
+
+        } catch (Exception e) {
+            log.error("Error fetching user complaints", e);
+            return ResponseEntity.status(500).body(Map.of("error", "Помилка завантаження скарг"));
+        }
+    }
+
+    @GetMapping("/my/advertisement")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<AdvertisementComplaintResponse>> getMyAdvertisementComplaints(
+            Authentication authentication) {
+
+        User user = userService.getCurrentUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        List<AdvertisementComplaintResponse> complaints =
+                complaintService.getAdvertisementComplaintsByUserId(user.getId());
+
+        return ResponseEntity.ok(complaints);
+    }
+
+    @GetMapping("/my/review")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ReviewComplaintResponse>> getMyReviewComplaints(
+            Authentication authentication) {
+
+        User user = userService.getCurrentUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        List<ReviewComplaintResponse> complaints =
+                complaintService.getReviewComplaintsByUserId(user.getId());
+
+        return ResponseEntity.ok(complaints);
+    }
+
+
 }

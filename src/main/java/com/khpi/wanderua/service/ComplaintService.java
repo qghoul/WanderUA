@@ -237,6 +237,43 @@ public class ComplaintService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public UserComplaintsResponse getUserComplaints(Long userId) {
+        log.info("Fetching all complaints for user {}", userId);
+
+        List<AdvertisementComplaint> advComplaints =
+                advertisementComplaintRepository.findByUserId(userId);
+
+        List<ReviewComplaint> revComplaints =
+                reviewComplaintRepository.findByUserId(userId);
+
+        List<AdvertisementComplaintResponse> advResponses = advComplaints.stream()
+                .map(this::mapToAdvertisementComplaintResponse)
+                .collect(Collectors.toList());
+
+        List<ReviewComplaintResponse> revResponses = revComplaints.stream()
+                .map(this::mapToReviewComplaintResponse)
+                .collect(Collectors.toList());
+
+        return new UserComplaintsResponse(advResponses, revResponses);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdvertisementComplaintResponse> getAdvertisementComplaintsByUserId(Long userId) {
+        log.info("Fetching advertisement complaints for user {}", userId);
+        return advertisementComplaintRepository.findByUserId(userId).stream()
+                .map(this::mapToAdvertisementComplaintResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewComplaintResponse> getReviewComplaintsByUserId(Long userId) {
+        log.info("Fetching review complaints for user {}", userId);
+        return reviewComplaintRepository.findByUserId(userId).stream()
+                .map(this::mapToReviewComplaintResponse)
+                .collect(Collectors.toList());
+    }
+
     private AdvertisementComplaintResponse mapToAdvertisementComplaintResponse(AdvertisementComplaint complaint) {
         AdvertisementComplaintResponse response = new AdvertisementComplaintResponse();
         response.setId(complaint.getId());

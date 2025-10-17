@@ -19,5 +19,6 @@ public interface AdvertisementComplaintRepository extends JpaRepository<Advertis
 
     boolean existsByUserIdAndAdvertisementId(Long userId, Long advertisementId);
 
+    List<AdvertisementComplaint> findByUserId(Long userId);
 
 }

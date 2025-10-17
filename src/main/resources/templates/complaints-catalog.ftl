@@ -7,184 +7,6 @@
     <link rel="stylesheet" type="text/css" href="/css/styles.css">
     <title>Каталог скарг - Адміністратор</title>
     <style>
-        .complaint-card {
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            width: 659px;
-        }
-
-        .complaint-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .complaint-type-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-        }
-
-        .badge-spam { background-color: #ff6b6b; }
-        .badge-inappropriate_content { background-color: #ee5a6f; }
-        .badge-misleading { background-color: #f39c12; }
-        .badge-offensive { background-color: #e74c3c; }
-        .badge-fraud { background-color: #c0392b; }
-        .badge-other { background-color: #95a5a6; }
-
-        .complaint-status {
-            font-weight: bold;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        .status-unresolved { background-color: #fff3cd; color: #856404; }
-        .status-confirmed { background-color: #d4edda; color: #155724; }
-        .status-rejected { background-color: #f8d7da; color: #721c24; }
-
-        .complaint-body {
-            margin: 15px 0;
-        }
-
-        .complaint-info {
-            font-size: 14px;
-            color: #666;
-            margin: 5px 0;
-        }
-
-        .complaint-comment {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-style: italic;
-            border-left: 3px solid #6c757d;
-        }
-
-        .admin-comment {
-            background-color: #e3f2fd;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            border-left: 3px solid #2196f3;
-        }
-
-        .complaint-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .btn-resolve {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .btn-confirm {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .btn-confirm:hover {
-            background-color: #c82333;
-        }
-
-        .btn-reject {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .btn-reject:hover {
-            background-color: #5a6268;
-        }
-
-        .review-preview {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 10px 0;
-        }
-
-        .review-preview-images {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .review-preview-images img {
-            width: 200px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 2px solid #ddd;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .review-preview-images img:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .filter-radios {
-            display: flex;
-            gap: 20px;
-            margin: 20px 0;
-            padding: 15px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            flex-wrap: wrap;
-        }
-
-        .filter-radios label {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tab-button {
-            padding: 10px 20px;
-            background-color: #f0f0f0;
-            cursor: pointer;
-            border-radius: 5px;
-            border: 1px black solid;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .tab-button.active {
-            background-color: #333;
-            color: white;
-        }
-
-        /* Form Group Styles */
         .form-group {
             margin-bottom: 20px;
         }
@@ -279,7 +101,6 @@
             overflow-y: auto;
         }
 
-
         .close {
             color: #aaa;
             float: right;
@@ -300,10 +121,10 @@
 <header>
     <ul class="menu">
         <div class="leftPart">
-            <li id="forBussines"><a href="/forBusiness">Інформація для бізнесу</a></li>
-            <li><a href="/aboutProject">Про проєкт</a></li>
-            <li><a href="/catalog">Каталог</a></li>
-            <li><a href="/help">FAQ</a></li>
+            <li id="mainButton"><a href="/">WanderUA</a></li>
+            <li id="aboutProject"><a href="/aboutProject">Про проєкт</a></li>
+            <li id="businessInfo"><a href="/business_info">Інформація для бізнесу</a></li>
+            <li id ="faq"><a href="/help">FAQ</a></li>
         </div>
         <div class="rightPart">
             <li id="login"><a href="/login">Увійти</a></li>

@@ -200,4 +200,7 @@ public class PageController {
     @GetMapping("/complaints")
     @PreAuthorize("hasRole('ADMIN')")
     public String complaintCatalog(){ return "complaints-catalog";}
+    @GetMapping("/my-complaints")
+    public String myComplaintsCatalog() { return "my-complaints";}
+
 }

@@ -44,10 +44,10 @@
 <header>
     <ul class="menu">
         <div class="leftPart">
-            <li id="forBussines"><a href="/forBusiness">Інформація для бізесу</a></li>
-            <li><a href="/aboutProject">Про проєкт</a></li>
-            <li><a href="/Tourists">Військовий туризм</a></li>
-            <li><a href="/help">FAQ</a></li>
+            <li id="mainButton"><a href="/">WanderUA</a></li>
+            <li id="aboutProject"><a href="/aboutProject">Про проєкт</a></li>
+            <li id="businessInfo"><a href="/business_info">Інформація для бізнесу</a></li>
+            <li id ="faq"><a href="/help">FAQ</a></li>
         </div>
         <div class="rightPart">
             <li id="login"><a href="/login">Увійти</a></li>
