@@ -82,7 +82,7 @@ function createProfileDropdown(buttonElement, userType) {
     let menuItems = [];
     if (userType === 'business') {
         menuItems = [
-            { text: 'Мої ідеї для подорожей', href: '/my-trips' },
+            { text: 'Мої ідеї для подорожей', href: '/travel-ideas' },
             { text: 'Мої пропозиції', href: '/api/advertisements/my' },
             { text: 'Мої відгуки', href: '/my-reviews' },
             { text: 'Подані скарги', href: '/my-complaints' }
@@ -90,7 +90,7 @@ function createProfileDropdown(buttonElement, userType) {
     } else {
         // Tourist
         menuItems = [
-            { text: 'Мої ідеї для подорожей', href: '/my-trips' },
+            { text: 'Мої ідеї для подорожей', href: '/travel-ideas' },
             { text: 'Мої відгуки', href: '/my-reviews' },
             { text: 'Подані скарги', href: '/my-complaints' }
         ];

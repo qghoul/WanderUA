@@ -12,10 +12,11 @@ class CatalogManager {
 
     init() {
         this.initCityAutocomplete();
-        this.initPriceSlider();
         this.initCategoryButtons();
         this.initEventHandlers();
         this.loadAdvertisements();
+        this.initPriceSlider();
+        this.update
     }
 
     initCityAutocomplete() {
@@ -138,8 +139,16 @@ class CatalogManager {
         updateTrack();
     }
 
+    togglePriceFilter(category) {
+        const priceFilter = document.querySelector('.price-filter');
+        if (priceFilter) {
+            priceFilter.style.display = (category === 'TOUR') ? 'block' : 'none';
+        }
+    }
+
     initCategoryButtons() {
         const categoryButtons = document.querySelectorAll('.category-button');
+        const cityInput = document.getElementById('cityInputCatalog');
 
         // Устанавливаем активную категорию при загрузке
         if (this.selectedCategory) {
@@ -147,20 +156,38 @@ class CatalogManager {
             if (activeButton) {
                 activeButton.classList.add('active');
             }
+            this.togglePriceFilter(this.selectedCategory);
         } else {
             const allButton = document.getElementById('all-category');
             if (allButton) {
                 allButton.classList.add('active');
             }
+            this.togglePriceFilter('');
         }
 
         categoryButtons.forEach(button => {
             button.addEventListener('click', () => {
                 categoryButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                this.loadAdvertisements(); //!!!
+                const category = button.dataset.category;
+                this.updateCityFieldState(category);
+                this.togglePriceFilter(category);
+                this.loadAdvertisements();
             });
         });
+    }
+
+    updateCityFieldState(category) {
+        const cityInput = document.getElementById('cityInputCatalog');
+        if (!cityInput) return;
+
+        if (category === 'TOUR') {
+            cityInput.style.backgroundColor = '#DDDDDD';
+            cityInput.placeholder = 'Для турів пошук по всій Україні';
+        } else {
+            cityInput.style.backgroundColor = '';
+            cityInput.placeholder = '';
+        }
     }
 
     initEventHandlers() {
@@ -191,12 +218,13 @@ class CatalogManager {
     }
 
     loadAdvertisements(page = 0) {
-        const city = document.getElementById('cityInputCatalog')?.value || '';
         const category = document.querySelector('.category-button.active')?.dataset.category || '';
+        const city = (category === 'TOUR') ? '' : (document.getElementById('cityInputCatalog')?.value || '');
         const minPrice = document.getElementById('minRange')?.value || '';
         const maxPrice = document.getElementById('maxRange')?.value || '';
         const sortBy = document.getElementById('sortSelect')?.value || 'popular';
         const permanentOnly = document.getElementById('permanentOnly')?.checked || false;
+
 
         const container = document.getElementById('catalog-container');
         if (container) {
@@ -286,10 +314,10 @@ class CatalogManager {
 
         cardHtml += '<div class="' + contentClass + '">';
         cardHtml += '<div class="save-button" onclick="event.stopPropagation(); toggleSave(' + ad.id + ')">';
-        cardHtml += '<svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">';
+        /*cardHtml += '<svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">';
         cardHtml += '<path d="M12 21C12 21 5 13.5 5 8.5C5 5.5 7.5 3 10.5 3C12 3 13.5 4 14 5C14.5 4 16 3 17.5 3C20.5 3 23 5.5 23 8.5C23 13.5 16 21 16 21H12Z" />';
         cardHtml += '</svg>';
-        cardHtml += '<span class="save-text">Зберегти</span>';
+        cardHtml += '<span class="save-text">Зберегти</span>'; */
         cardHtml += '</div>';
 
         cardHtml += '<div>';
@@ -547,11 +575,7 @@ class CatalogManager {
 window.openAdvertisement = function(id) {
     window.location.href = `/advertisements/${id}`;
 };
-// Save into trip plan
-window.toggleSave = function(id) {
-    console.log('Toggle save for advertisement:', id);
-    // TODO: Реализовать сохранение в избранное
-};
+
 
 // Catalog initialization
 document.addEventListener("DOMContentLoaded", function() {

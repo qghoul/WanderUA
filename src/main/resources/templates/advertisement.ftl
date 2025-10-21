@@ -71,29 +71,12 @@
       color: black;
     }
 
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
+    .form-group select{
       width: 100%;
       padding: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
       box-sizing: border-box;
-    }
-
-    .form-group textarea {
-      height: 100px;
-      resize: vertical;
     }
 
     .rating-input {
@@ -331,7 +314,7 @@
       <li id="mainButton"><a href="/">WanderUA</a></li>
       <li id="aboutProject"><a href="/aboutProject">Про проєкт</a></li>
       <li id="businessInfo"><a href="/business_info">Інформація для бізнесу</a></li>
-      <li id ="faq"><a href="/help">FAQ</a></li>
+      <li id ="faq"><a href="/help"></a></li>
     </div>
     <div class="rightPart">
       <li id="login"><a href="/login">Увійти</a></li>
@@ -506,6 +489,93 @@
   </div>
 </div>
 
+<!-- Travel Idea Save Modal -->
+<div id="travelIdeaModal" class="travel-idea-modal">
+  <div class="travel-idea-modal-content">
+    <div class="travel-idea-modal-header">
+      <h2>Зберегти в ідею подорожі</h2>
+      <button class="travel-idea-close" onclick="closeTravelIdeaModal()">&times;</button>
+    </div>
+
+    <div class="travel-idea-modal-body">
+      <div class="success-message" id="successMessage">
+        <span class="success-icon">✓</span>
+        <span>Оголошення успішно додано до ідеї подорожі!</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="travel-idea-tabs">
+        <button class="travel-idea-tab active" onclick="switchTab('existing')">
+          Існуючі ідеї
+        </button>
+        <button class="travel-idea-tab" onclick="switchTab('new')">
+          Створити нову
+        </button>
+      </div>
+
+      <!-- Tab: Existing Travel Ideas -->
+      <div id="existingTab" class="travel-idea-tab-content active">
+        <div class="travel-idea-search">
+          <input type="text" id="searchTravelIdeas" placeholder="🔍 Пошук ідей подорожі..." onkeyup="filterTravelIdeas()">
+        </div>
+
+        <div id="travelIdeasListContainer">
+          <!-- Loading State -->
+          <div class="loading-state" id="loadingState">
+            <div class="spinner"></div>
+            <p>Завантаження ідей подорожі...</p>
+          </div>
+
+          <!-- Travel Ideas List -->
+          <div class="travel-ideas-list" id="travelIdeasList" style="display: none;">
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-text">У вас ще немає ідей подорожі</div>
+            <div class="empty-state-subtext">Створіть нову ідею, щоб почати збирати цікаві місця</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Create New Travel Idea -->
+      <div id="newTab" class="travel-idea-tab-content">
+        <div class="create-new-form">
+          <div class="form-group">
+            <label for="newTravelIdeaTitle">
+              Назва <span class="required-mark">*</span>
+            </label>
+            <input type="text"
+                   id="newTravelIdeaTitle"
+                   placeholder="Наприклад: Вихідні у Львові"
+                   maxlength="100"
+                   required>
+          </div>
+
+          <div class="form-group">
+            <label for="newTravelIdeaDescription">
+              Опис
+            </label>
+            <textarea id="newTravelIdeaDescription"
+                      placeholder="Опишіть вашу ідею подорожі..."
+                      maxlength="1000"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="travel-idea-modal-footer">
+      <button class="btn-travel-idea btn-cancel" onclick="closeTravelIdeaModal()">
+        Скасувати
+      </button>
+      <button class="btn-travel-idea btn-save" id="saveButton" onclick="handleSave()">
+        Зберегти
+      </button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-content">
     <p>Copyright &copy; 2025 WanderUA. All rights reserved.</p>
@@ -513,6 +583,11 @@
 </footer>
 
 <script>
+  let currentTab = 'existing';
+  let selectedTravelIdeaId = null;
+  let currentAdvertisementId = null;
+  let travelIdeas = [];
+
   function getAdvertisementIdFromUrl() {
     <#if advertisementId??>
     console.log('Advertisement ID from model: ${advertisementId}');
@@ -766,7 +841,7 @@
     const container = document.getElementById('reviews-container');
 
     if (reviews.length === 0) {
-      container.innerHTML = '<p>Поки що немає відгуків. Будьте першим!</p>';
+      container.innerHTML = '<div class="without-reviews-message">Поки що немає відгуків. Будьте першим!</div>';
       return;
     }
 
@@ -1456,17 +1531,340 @@
     }
   });
 
+  // Open modal and load travel ideas
+  async function openTravelIdeaModal(advertisementId) {
+    console.log('Opening modal for advertisement:', advertisementId);
+
+    currentAdvertisementId = advertisementId;
+    selectedTravelIdeaId = null;
+
+    const modal = document.getElementById('travelIdeaModal');
+    if (!modal) {
+      console.error('Modal not found!');
+      return;
+    }
+
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    switchTab('existing');
+
+    await loadTravelIdeas();;
+  }
+
+  function closeTravelIdeaModal() {
+    const modal = document.getElementById('travelIdeaModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+    document.body.style.overflow = 'auto';
+
+    // Reset form
+    const titleInput = document.getElementById('newTravelIdeaTitle');
+    const descInput = document.getElementById('newTravelIdeaDescription');
+    const searchInput = document.getElementById('searchTravelIdeas');
+    const successMsg = document.getElementById('successMessage');
+
+    if (titleInput) titleInput.value = '';
+    if (descInput) descInput.value = '';
+    if (searchInput) searchInput.value = '';
+    if (successMsg) successMsg.classList.remove('show');
+
+    selectedTravelIdeaId = null;
+  }
+
+  function switchTab(tabName) {
+    currentTab = tabName;
+
+    console.log('Switching to tab:', tabName);
+
+    const tabs = document.querySelectorAll('.travel-idea-tab');
+    tabs.forEach(tab => {
+      tab.classList.remove('active');
+      const tabText = tab.textContent.trim().toLowerCase();
+      if ((tabName === 'existing' && tabText.includes('існуючі')) ||
+              (tabName === 'new' && tabText.includes('створити'))) {
+        tab.classList.add('active');
+      }
+    });
+
+    const existingTab = document.getElementById('existingTab');
+    const newTab = document.getElementById('newTab');
+
+    if (existingTab) {
+      existingTab.classList.remove('active');
+      if (tabName === 'existing') {
+        existingTab.classList.add('active');
+      }
+    }
+
+    if (newTab) {
+      newTab.classList.remove('active');
+      if (tabName === 'new') {
+        newTab.classList.add('active');
+      }
+    }
+
+    updateSaveButton();
+  }
+
+  function switchTabSafe(event, tabName) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    switchTab(tabName);
+  }
+  <#noparse>
+  async function loadTravelIdeas() {
+    const loadingState = document.getElementById('loadingState');
+    const listContainer = document.getElementById('travelIdeasList');
+    const emptyState = document.getElementById('emptyState');
+
+    if (loadingState) loadingState.style.display = 'block';
+    if (listContainer) listContainer.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+
+    try {
+      console.log('Fetching from /api/travel-ideas...');
+      const response = await fetch('/api/travel-ideas', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Помилка: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Response received:', responseText.substring(0, 100) + '...');
+
+      travelIdeas = JSON.parse(responseText);
+      console.log('Parsed', travelIdeas.length, 'travel ideas');
+
+      if (!Array.isArray(travelIdeas)) {
+        throw new Error('Невірний формат даних');
+      }
+
+      if (loadingState) loadingState.style.display = 'none';
+
+      if (travelIdeas.length === 0) {
+        console.log('No travel ideas found');
+        if (emptyState) emptyState.style.display = 'block';
+      } else {
+        console.log('Displaying travel ideas');
+        if (listContainer) listContainer.style.display = 'block';
+        displayTravelIdeas(travelIdeas);
+      }
+    } catch (error) {
+      console.error('Error loading travel ideas:', error);
+      loadingState.innerHTML = '<p style="color: #ff4444;">Помилка завантаження ідей подорожі</p>';
+    }
+  }
+
+
+  function displayTravelIdeas(ideas) {
+    const listContainer = document.getElementById('travelIdeasList');
+
+    listContainer.innerHTML = ideas.map(idea => `
+            <div class="travel-idea-item" onclick="selectTravelIdea(${idea.id})" data-id="${idea.id}">
+                <div class="travel-idea-item-info">
+                    <div class="travel-idea-item-title">${escapeHtml(idea.title)}</div>
+                    ${idea.description ? `<div class="travel-idea-item-description">${escapeHtml(idea.description.substring(0, 80))}${idea.description.length > 80 ? '...' : ''}</div>` : ''}
+                    <div class="travel-idea-item-count">📍 ${idea.advertisementCount || 0} місць</div>
+                </div>
+                <div class="travel-idea-item-check"></div>
+            </div>
+        `).join('');
+    }
+
+  function selectTravelIdea(id) {
+    selectedTravelIdeaId = id;
+    document.querySelectorAll('.travel-idea-item').forEach(item => {
+      item.classList.remove('selected');
+    });
+    const selectedItem = document.querySelector(`.travel-idea-item[data-id="${id}"]`);
+    if (selectedItem) {
+      selectedItem.classList.add('selected');
+    }
+    updateSaveButton();
+  }
+
+
+  function filterTravelIdeas() {
+    const searchInput = document.getElementById('searchTravelIdeas');
+    if (!searchInput) return;
+
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredIdeas = travelIdeas.filter(idea =>
+            idea.title.toLowerCase().includes(searchTerm) ||
+            (idea.description && idea.description.toLowerCase().includes(searchTerm))
+    );
+
+    displayTravelIdeas(filteredIdeas);
+  }
+
+  function updateSaveButton() {
+    const saveButton = document.getElementById('saveButton');
+
+    if (currentTab === 'existing') {
+      saveButton.textContent = 'Додати до ідеї';
+      saveButton.disabled = selectedTravelIdeaId === null;
+    } else {
+      saveButton.textContent = 'Створити і додати';
+      saveButton.disabled = false;
+    }
+  }
+
+  async function handleSave() {
+    if (currentTab === 'existing') {
+      await addToExistingTravelIdea();
+    } else {
+      await createNewTravelIdea();
+    }
+  }
+
+  async function addToExistingTravelIdea() {
+    if (!selectedTravelIdeaId) {
+      alert('Будь ласка, оберіть ідею подорожі');
+      return;
+    }
+
+    const saveButton = document.getElementById('saveButton');
+    saveButton.disabled = true;
+    saveButton.textContent = 'Збереження...';
+
+    try {
+      const response = await fetch(`/api/travel-ideas/${selectedTravelIdeaId}/advertisements/${currentAdvertisementId}`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Помилка збереження');
+      }
+
+      const successMsg = document.getElementById('successMessage');
+      successMsg.classList.add('show');
+
+      setTimeout(() => {
+        closeTravelIdeaModal();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error adding to travel idea:', error);
+      alert(error.message || 'Помилка додавання до ідеї подорожі');
+      saveButton.disabled = false;
+      saveButton.textContent = 'Додати до ідеї';
+    }
+  }
+
+  async function createNewTravelIdea() {
+    const title = document.getElementById('newTravelIdeaTitle').value.trim();
+    const description = document.getElementById('newTravelIdeaDescription').value.trim();
+
+    if (!title) {
+      alert('Будь ласка, вкажіть назву ідеї подорожі');
+      return;
+    }
+
+    const saveButton = document.getElementById('saveButton');
+    saveButton.disabled = true;
+    saveButton.textContent = 'Створення...';
+
+    try {
+      const createResponse = await fetch('/api/travel-ideas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: title,
+          description: description
+        })
+      });
+
+      if (!createResponse.ok) {
+        const error = await createResponse.json();
+        throw new Error(error.error || 'Помилка створення ідеї');
+      }
+
+      const result = await createResponse.json();
+      const newTravelIdeaId = result['travel-idea'].id;
+
+      const addResponse = await fetch(`/api/travel-ideas/${newTravelIdeaId}/advertisements/${currentAdvertisementId}`, {
+        method: 'POST'
+      });
+
+      if (!addResponse.ok) {
+        throw new Error('Помилка додавання оголошення');
+      }
+
+      const successMsg = document.getElementById('successMessage');
+      successMsg.classList.add('show');
+
+      setTimeout(() => {
+        closeTravelIdeaModal();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error creating travel idea:', error);
+      alert(error.message || 'Помилка створення ідеї подорожі');
+      saveButton.disabled = false;
+      saveButton.textContent = 'Створити і додати';
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('travelIdeaModal');
+    if (event.target === modal) {
+      closeTravelIdeaModal();
+    }
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      const modal = document.getElementById('travelIdeaModal');
+      if (modal.style.display === 'block') {
+        closeTravelIdeaModal();
+      }
+    }
+  });
+
+  async function saveToFavorites() {
+    const advertisementId = getAdvertisementIdFromUrl();
+
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) {
+      alert('Для збереження оголошення необхідно увійти в систему');
+      window.location.href = '/login';
+      return;
+    }
+
+    openTravelIdeaModal(advertisementId);
+  }
+  </#noparse>
+
   function goBack() {
     if (document.referrer) {
       window.history.back();
     } else {
       window.location.href = '/advertisements';
     }
-  }
-
-  function saveToFavorites() {
-    // TODO: Реализовать сохранение в избранное
-    alert('Функція збереження в ідею подорожі буде реалізована пізніше');
   }
 
   function showError(message) {

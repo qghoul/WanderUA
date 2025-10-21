@@ -37,6 +37,9 @@ public class AdvertisementService {
     private final ThemeRepository themeRepository;
     private final AdvertisementImageService imageService;
 
+    public Optional<Advertisement> findById(Long advertisementId){
+        return advertisementRepository.findById(advertisementId);
+    }
 
     public AdvertisementResponse createAdvertisement(CreateAdvertisementRequest request,
                                                      List<MultipartFile> images,
@@ -354,7 +357,7 @@ public class AdvertisementService {
         return statistics;
     }
 
-    private CatalogAdvertisementResponse mapToCatalogResponse(Advertisement advertisement) {
+    public CatalogAdvertisementResponse mapToCatalogResponse(Advertisement advertisement) {
         List<String> imageUrls = advertisement.getImages().stream()
                 .map(img -> "/uploads/" + img.getName())
                 .collect(Collectors.toList());
