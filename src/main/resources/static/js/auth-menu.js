@@ -42,7 +42,7 @@ function updateAuthMenu(authData) {
 
         if (isAdmin) {
             // Admin
-            updateButton(loginButton, 'Запити верифікації', '/admin/dashboard');
+            updateButton(loginButton, 'Запити верифікації', '/verify-requests-catalog');
             updateButton(createAddButton, 'Перегляд скарг', '/complaints');
         } else if (isBusiness) {
             // Business represent
@@ -85,14 +85,17 @@ function createProfileDropdown(buttonElement, userType) {
             { text: 'Мої ідеї для подорожей', href: '/travel-ideas' },
             { text: 'Мої пропозиції', href: '/api/advertisements/my' },
             { text: 'Мої відгуки', href: '/my-reviews' },
-            { text: 'Подані скарги', href: '/my-complaints' }
+            { text: 'Подані скарги', href: '/my-complaints' },
+            { text: 'Подані бізнес-запити', href: '/my-verify-requests' }
         ];
     } else {
         // Tourist
         menuItems = [
             { text: 'Мої ідеї для подорожей', href: '/travel-ideas' },
             { text: 'Мої відгуки', href: '/my-reviews' },
-            { text: 'Подані скарги', href: '/my-complaints' }
+            { text: 'Подані скарги', href: '/my-complaints' },
+            { text: 'Подані бізнес-запити', href: '/my-verify-requests' }
+
         ];
     }
 

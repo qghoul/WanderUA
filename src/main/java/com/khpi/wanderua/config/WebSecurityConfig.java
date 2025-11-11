@@ -46,6 +46,7 @@ public class WebSecurityConfig {
                 // Authorization settings
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/business_info").permitAll()
                         .requestMatchers(HttpMethod.GET, "/catalog/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/advertisements/**").permitAll()
                         // API adverts - GET fot all users, POST/PUT/DELETE for business represents

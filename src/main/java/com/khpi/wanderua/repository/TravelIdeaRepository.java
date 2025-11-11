@@ -14,14 +14,8 @@ import java.util.Optional;
 @Repository
 public interface TravelIdeaRepository extends JpaRepository<TravelIdea, Long> {
 
-    /**
-     * Знайти всі TravelIdea користувача, відсортовані по ID (нові спочатку)
-     */
     List<TravelIdea> findByUser(User user);
 
-    /**
-     * Знайти TravelIdea по ID та користувачу (для безпеки)
-     */
     Optional<TravelIdea> findByIdAndUser(Long id, User user);
 
 

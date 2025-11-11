@@ -53,7 +53,7 @@ public class UserService implements UserDetailsService {
     }
     public User save(User user){ return userRepository.save(user);}
 
-    // TEST VARIATION
+    // UPDATED VARIATION
     public boolean saveUser(User user) {
         Optional<User> userFromDBByUsername = userRepository.findByUsername(user.getUsername());
         if (userFromDBByUsername.isPresent()) {
@@ -67,7 +67,7 @@ public class UserService implements UserDetailsService {
         }
 
         try {
-            // Set roles: USER + BUSINESS (for test)
+            // Set roles: USER
             Set<Role> roles = new HashSet<>();
 
             // Add base role USER
@@ -75,18 +75,22 @@ public class UserService implements UserDetailsService {
                     .orElseGet(() -> createDefaultRole(RoleConstants.ROLE_USER));
             roles.add(userRole);
 
-            // Add role BUSINESS (for test)
+            /*init roles if not already init
             Role businessRole = roleRepository.findByName(RoleConstants.ROLE_BUSINESS)
                     .orElseGet(() -> createDefaultRole(RoleConstants.ROLE_BUSINESS));
-            roles.add(businessRole);
+            Role adminRole = roleRepository.findByName(RoleConstants.ROLE_ADMIN)
+                    .orElseGet(() -> createDefaultRole(RoleConstants.ROLE_ADMIN));*/
+
+            /* Add role BUSINESS (for test)
+            roles.add(businessRole); */
 
             user.setRoles(roles);
-            user.setBusinessRepresentVerify(true); // auto-verify (for test)
+            user.setBusinessRepresentVerify(false);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setEnabled(true);
 
             userRepository.save(user);
-            log.info("User {} registered successfully as business representative", user.getUsername());
+            log.info("User {} registered successfully as default user", user.getUsername());
             return true;
 
         } catch (Exception e) {
@@ -94,7 +98,7 @@ public class UserService implements UserDetailsService {
             return false;
         }
     }
-    // PROD VARIATION
+
     /*public boolean saveRegularUser(User user) {
         Optional<User> userFromDBByUsername = userRepository.findByUsername(user.getUsername());
         if (userFromDBByUsername.isPresent()) {

@@ -14,10 +14,10 @@
     <h1>Реєстрація</h1>
     <p>Будь-ласка заповніть форму для реєстрації.</p>
 
-    <div style="background-color: #e8f5e8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
+    <!--<div style="background-color: #e8f5e8; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
       <strong>🏢 Автоматична реєстрація для бізнесу:</strong><br>
       Всі нові користувачі отримують статус представника бізнесу і можуть створювати оголошення.
-    </div>
+    </div>-->
 
     <hr>
 

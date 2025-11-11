@@ -204,4 +204,23 @@ public class PageController {
     @GetMapping("/travel-ideas/{id}")
     public String getTravelIdeaDetail() { return "travel-idea-detail";}
 
+    @GetMapping("/business_info")
+    public String getBusinessInfoPage(){ return "business-info";}
+    @GetMapping("/business_verify")
+    public String getBusinessVerifyForm(){ return "business-verify";}
+    @GetMapping("/sustainability_verify")
+    public String getSustainabilityVerifyForm(){ return "sustainability-verify";}
+
+    @GetMapping("/verify-requests-catalog")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String verifyRequestsCatalogPage() {
+        return "verify-request-catalog";
+    }
+
+    @GetMapping("/my-verify-requests")
+    @PreAuthorize("isAuthenticated()")
+    public String myVerifyRequestsPage() {
+        return "my-verify-requests";
+    }
+
 }

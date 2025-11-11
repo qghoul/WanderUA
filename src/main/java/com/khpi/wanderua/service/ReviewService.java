@@ -119,6 +119,10 @@ public class ReviewService {
         reviewRepository.delete(review);
 
         updateAdvertisementRating(advertisementId);
+
+        Advertisement advert = advertisementRepository.findById(advertisementId).get();
+        advert.setRatingsCount(advert.getRatingsCount() - 1);
+        advertisementRepository.save(advert);
     }
 
     @Transactional

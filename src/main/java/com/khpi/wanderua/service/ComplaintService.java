@@ -178,6 +178,10 @@ public class ComplaintService {
             Review review = complaint.getReview();
             review.setActive(false);
             reviewRepository.save(review);
+
+            Advertisement advert = review.getAdvertisement();
+            advert.setRatingsCount(advert.getRatingsCount() - 1);
+            advertisementRepository.save(advert);
             log.info("Review {} marked as inactive due to confirmed complaint", review.getId());
         }
 
