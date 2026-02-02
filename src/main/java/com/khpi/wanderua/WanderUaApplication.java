@@ -1,4 +1,4 @@
-package com.khpi.wanderua.app;
+package com.khpi.wanderua;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
