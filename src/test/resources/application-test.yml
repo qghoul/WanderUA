@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+  redis:
+    enabled: false
+
+jwt:
+  secret: test-test-test-test-test-test-test-test
