@@ -1,4 +1,4 @@
-![CI](https://github.com/qghoul/WanderUA/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/qghoul/WanderUA/actions/workflows/main.yml/badge.svg)
 STUDY PROJECT for master's diploma.
 Project for developing a web-app for tourism in Ukraine. The online platform provides opportunities for local businesses to share information about themselves for free.
 Also, the web-app helps tourists find unique attractions and activities in Ukraine.
