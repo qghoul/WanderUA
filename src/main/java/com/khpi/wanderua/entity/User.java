@@ -46,6 +46,8 @@ public class User implements UserDetails {
     private boolean accountNonLocked = true;
     @Column(nullable = false)
     private boolean enabled = true;
+    @Column(name = "jwt_token_version")
+    private Integer jwtTokenVersion;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",

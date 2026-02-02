@@ -463,6 +463,7 @@ public class AdvertisementService {
                 .popularityScore(advertisement.getPopularityScore())
                 .typeSpecificData(typeSpecificData)
                 .createdAt(advertisement.getCreatedAt())
+                .sustainabilityVerify(advertisement.getBusiness().getSustainable_verify())
                 .build();
     }
 

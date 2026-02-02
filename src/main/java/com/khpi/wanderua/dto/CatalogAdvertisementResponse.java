@@ -30,6 +30,7 @@ public class CatalogAdvertisementResponse {
     private String workingHours;
     private Double popularityScore;
     private Map<String, Object> typeSpecificData;
+    private Boolean sustainabilityVerify;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

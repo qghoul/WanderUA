@@ -34,7 +34,7 @@
     </div>
 
     <div class="addForm-container">
-        <form class="addForm" id="businessVerificationForm" enctype="multipart/form-data">
+        <form class="addForm" id="sustainabilityVerificationForm" enctype="multipart/form-data">
             <hr>
             <label for="businessId"><b>Оберіть бізнес:</b></label>
             <select class="business-select" id="businessId" name="businessId" required>

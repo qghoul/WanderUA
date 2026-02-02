@@ -314,6 +314,21 @@ class CatalogManager {
 
         cardHtml += '<div class="' + contentClass + '">';
         cardHtml += '<div class="save-button" onclick="event.stopPropagation(); toggleSave(' + ad.id + ')">';
+        if (ad.sustainabilityVerify !== false) {
+            // Контейнер для значка та тексту з блідо-зеленим фоном та заокругленими кутами
+            cardHtml += '<div class="sustainability-badge">';
+
+            // SVG для стилізованого листка (використовуємо простий, але помітний значок)
+            cardHtml += '<svg class="leaf-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="#ffffff" stroke-width="0">';
+            // Шлях для значка листка берези (спрощений, зубчастий контур)
+            cardHtml += '<path d="M12 2L9 6L10 7L7 11L8 12L5 16C5 19 8 21 12 22C16 21 19 19 19 16L16 12L17 11L14 7L15 6L12 2Z" />';
+            cardHtml += '</svg>';
+
+            // Текст "Стала пропозиція"
+            cardHtml += '<span class="sustainability-text">Стала пропозиція</span>';
+
+            cardHtml += '</div>'; // Закриття контейнера
+        }
         /*cardHtml += '<svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">';
         cardHtml += '<path d="M12 21C12 21 5 13.5 5 8.5C5 5.5 7.5 3 10.5 3C12 3 13.5 4 14 5C14.5 4 16 3 17.5 3C20.5 3 23 5.5 23 8.5C23 13.5 16 21 16 21H12Z" />';
         cardHtml += '</svg>';
@@ -328,6 +343,9 @@ class CatalogManager {
         }
         if (ad.address) {
             cardHtml += '<div class="' + infoClass + '">Адреса: ' + ad.address + '</div>';
+        }
+        if (ad.sustainabilityVerify !== false) {
+
         }
 
         cardHtml += this.getTypeSpecificInfo(ad);

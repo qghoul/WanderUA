@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AdvertisementRepository
+public interface
+AdvertisementRepository
         extends JpaRepository<Advertisement, Long> {
 
     Page<Advertisement> findByIsActiveTrue(Pageable pageable);

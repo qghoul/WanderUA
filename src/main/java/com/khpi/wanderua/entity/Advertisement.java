@@ -53,11 +53,11 @@ public abstract class Advertisement {
     @Column(name = "weekend_close")
     private LocalTime weekendClose;
     @Column(name = "review_avg_rating")
-    private Double reviewAvgRating; // realize auto update every 1 hour
+    private Double reviewAvgRating; // need to DELETE and replace with dynamic requests to review table OR change delete review logic to prevent count Deleted reviews in score
     private Integer views; // count
     private Integer clicks; // count
     @Column(name = "ratings_count")
-    private Integer ratingsCount; // realize auto update every 1 hour
+    private Integer ratingsCount; // need to DELETE and replace with dynamic requests to BD
     @Column(name = "popularity_score")
     private Double popularityScore; // realize auto update every 1 hour
     @Column(name = "website_url")

@@ -3,6 +3,7 @@ package com.khpi.wanderua.service;
 import com.khpi.wanderua.entity.Role;
 import com.khpi.wanderua.entity.RoleConstants;
 import com.khpi.wanderua.entity.User;
+import com.khpi.wanderua.service.ExtendedUserDetailsService;
 import com.khpi.wanderua.repository.RoleRepository;
 import com.khpi.wanderua.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -25,7 +26,7 @@ import java.util.*;
 @Transactional
 @RequiredArgsConstructor
 @Slf4j
-public class UserService implements UserDetailsService {
+public class UserService implements ExtendedUserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -38,6 +39,16 @@ public class UserService implements UserDetailsService {
 
         log.debug("Loading user: {} with roles: {}", email, user.getRoles());
         return user;
+    }
+
+    @Override
+    public UserDetails loadById(Long id){
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            throw new UsernameNotFoundException("User not found with id: " + id);
+        }
+        log.debug("Loading user: {} with roles: {}", id, userOptional.get().getRoles());
+        return userOptional.get();
     }
     public User findUserById(Long userId) {
         return userRepository.findById(userId).orElse(null);
@@ -52,6 +63,10 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll();
     }
     public User save(User user){ return userRepository.save(user);}
+
+    public Optional<Integer> findTokenVersionById(Long userId){
+        return userRepository.findTokenVersionById(userId);
+    }
 
     // UPDATED VARIATION
     public boolean saveUser(User user) {
@@ -192,41 +207,24 @@ public class UserService implements UserDetailsService {
 
     public User getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            log.warn("Authentication is null or not authenticated");
             return null;
         }
-
-        String identifier = authentication.getName();
+        String identifier = authentication.getName(); // Здесь лежит "4"
         log.debug("Looking for user with identifier: {}", identifier);
-
-        Object principal = authentication.getPrincipal();
-        log.debug("Principal type: {}", principal != null ? principal.getClass().getName() : "null");
-
-        if (principal instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) principal;
-            log.debug("UserDetails username: {}", userDetails.getUsername());
-            identifier = userDetails.getUsername();
-        }
-        // try to fing by email
-        User user = findUserByEmail(identifier);
-
-        if (user == null) {
-            log.warn("User not found by email: {}, trying by username", identifier);
-            // Try to find by username
-            user = findUserByUsername(identifier).orElse(null);
-        }
-
-        if (user == null) {
-            log.error("User not found by email OR username: {}", identifier);
-
-            // FOR TEST: Дополнительная отладка - выводим все пользователей в БД
-            List<User> allUsers = allUsers();
-            log.debug("Total users in database: {}", allUsers.size());
-            for (User u : allUsers) {
-                log.debug("DB User: id={}, username={}, email={}", u.getId(), u.getUsername(), u.getEmail());
+        try {
+            Long userId = Long.parseLong(identifier);
+            Optional<User> userById = userRepository.findById(userId);
+            if (userById.isPresent()) {
+                log.debug("User found by ID: {}", userId);
+                return userById.get();
             }
-        } else {
-            log.debug("User found: {}", user.getUsername());
+        } catch (NumberFormatException e) {
+            log.debug("Identifier is not a numeric ID, falling back to email/username search");
+        }
+
+        User user = findUserByEmail(identifier);
+        if (user == null) {
+            user = findUserByUsername(identifier).orElse(null);
         }
 
         return user;

@@ -1,16 +1,24 @@
 package com.khpi.wanderua.controller;
 
+import com.khpi.wanderua.config.JwtUtil;
+import com.khpi.wanderua.dto.LoginRequest;
 import com.khpi.wanderua.entity.User;
+import com.khpi.wanderua.repository.UserRepository;
 import com.khpi.wanderua.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -19,6 +27,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AuthController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
 
     @PostMapping("/registration")
     public String registerUser(@ModelAttribute User user,
@@ -69,5 +80,45 @@ public class AuthController {
         }
 
         return "redirect:/main.html";
+    }
+
+    @PostMapping("/login")
+    public String login(@ModelAttribute LoginRequest loginRequest,
+                                   HttpServletResponse response) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getEmail(),
+                            loginRequest.getPassword()
+                    )
+            );
+
+            User user = (User) authentication.getPrincipal();
+            Integer versionInDB = user.getJwtTokenVersion();
+            if (versionInDB == null) {
+                user.setJwtTokenVersion(1);
+                userRepository.save(user);
+                log.info("Initialized token version for user {}", user.getEmail());
+            }
+
+            String token = jwtUtil.generateToken(user);
+
+            Cookie cookie = new Cookie("accessToken", token);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(false);
+            cookie.setPath("/");
+            cookie.setMaxAge(24 * 60 * 60); //24 hours
+
+            response.addCookie(cookie);
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            log.info("User {} logged in and received JWT cookie", user.getEmail());
+
+            return "redirect:/main";
+
+        } catch (AuthenticationException e) {
+            log.warn("Failed login attempt for email: {}", loginRequest.getEmail());
+            return "redirect:/login?error=true";
+        }
     }
 }
