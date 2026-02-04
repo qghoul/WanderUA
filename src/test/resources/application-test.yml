@@ -12,3 +12,7 @@ spring:
 
 jwt:
   secret: test-test-test-test-test-test-test-test
+
+app:
+  uploads:
+    base-path: src/test/resources/uploads

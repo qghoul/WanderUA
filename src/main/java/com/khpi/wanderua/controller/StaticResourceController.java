@@ -69,9 +69,9 @@ public class StaticResourceController {
                     .headers(headers)
                     .body(resource);
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Error serving image: {} in category: {}", filename, category, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            throw e;
         }
     }
 
