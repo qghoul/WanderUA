@@ -8,7 +8,11 @@ spring:
     show-sql: false
 
   redis:
-    enabled: false
+    enabled: false;
+
+    web:
+      resources:
+        add-mappings: false
 
 jwt:
   secret: test-test-test-test-test-test-test-test
