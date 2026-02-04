@@ -1,7 +1,13 @@
 package com.khpi.wanderua.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,48 +16,31 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @Data
+    @AllArgsConstructor
+    static class ErrorResponse {
+        private String error;
+        private String message;
+    }
+
     @ExceptionHandler(Exception.class)
-    public String handleGenericException(Exception ex, Model model, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-
-        log.error("Unhandled exception for request {}: ", requestURI, ex);
-
-        if (requestURI.startsWith("/api/")) {
-            return "error/api-error";
-        }
-
-        model.addAttribute("error", "Виникла непередбачена помилка");
-        model.addAttribute("message", ex.getMessage());
-        return "error/general-error";
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        log.error("Unhandled exception: ", ex);
+        ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", "An unexpected error occurred");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-    public String handleAccessDeniedException(Exception ex, Model model, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-
-        log.warn("Access denied for request {}: {}", requestURI, ex.getMessage());
-
-        if (requestURI.startsWith("/api/")) {
-            return "error/access-denied-api";
-        }
-
-        model.addAttribute("error", "Доступ заборонений");
-        model.addAttribute("message", "У вас немає прав для виконання цієї операції");
-        return "error/access-denied";
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("Access denied: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("Access Denied", "You do not have permission to perform this operation");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
-    @ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
-    public String handleEntityNotFoundException(Exception ex, Model model, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-
-        log.warn("Entity not found for request {}: {}", requestURI, ex.getMessage());
-
-        if (requestURI.startsWith("/api/")) {
-            return "error/not-found-api";
-        }
-
-        model.addAttribute("error", "Ресурс не знайдений");
-        model.addAttribute("message", ex.getMessage());
-        return "error/not-found";
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException ex) {
+        log.warn("Entity not found: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("Not Found", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 }
