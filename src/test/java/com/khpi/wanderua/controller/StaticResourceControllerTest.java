@@ -56,7 +56,7 @@ public class StaticResourceControllerTest {
         String invalidFilename = "hacker%2Fattack.jpg";
 
         mockMvc.perform(get("/images/reviews/" + invalidFilename))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
