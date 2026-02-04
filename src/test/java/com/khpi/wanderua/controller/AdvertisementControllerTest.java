@@ -71,7 +71,7 @@ class AdvertisementControllerTest {
                 .thenReturn(sampleResponse);
 
         // Act & Assert: Perform GET request and expect 200 OK and JSON content
-        mockMvc.perform(get("/advertisements/catalog")
+        mockMvc.perform(get("/api/advertisements/catalog")
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print()) // Print request and response for debugging
                 .andExpect(status().isOk())
