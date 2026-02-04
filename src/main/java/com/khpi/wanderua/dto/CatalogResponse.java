@@ -1,13 +1,16 @@
 package com.khpi.wanderua.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @Builder
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class CatalogResponse {
     private List<CatalogAdvertisementResponse> advertisements;
     private String selectedCity;
