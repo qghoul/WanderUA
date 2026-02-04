@@ -23,6 +23,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,13 +67,13 @@ class AdvertisementControllerTest {
                 .hasPrevious(false)
                 .build();
 
-        // Mock the service method with any CatalogFilterRequest argument
         when(advertisementService.getCatalogAdvertisements(any(CatalogFilterRequest.class)))
                 .thenReturn(sampleResponse);
 
         // Act & Assert: Perform GET request and expect 200 OK and JSON content
         mockMvc.perform(get("/advertisements/catalog")
                         .accept(MediaType.APPLICATION_JSON))
+                .andDo(print()) // Print request and response for debugging
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
@@ -97,6 +98,7 @@ class AdvertisementControllerTest {
         // Act & Assert: Perform GET request and expect 200 OK and JSON content with empty advertisements list
         mockMvc.perform(get("/advertisements/catalog")
                         .accept(MediaType.APPLICATION_JSON))
+                .andDo(print()) // Print request and response for debugging
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"advertisements\":[]}"));
     }
