@@ -1,12 +1,16 @@
 package com.khpi.wanderua.controller;
 
+import com.khpi.wanderua.config.SecurityHelper;
 import com.khpi.wanderua.dto.CatalogAdvertisementResponse;
 import com.khpi.wanderua.dto.CatalogFilterRequest;
 import com.khpi.wanderua.dto.CatalogResponse;
 import com.khpi.wanderua.enums.AdvertisementType;
 import com.khpi.wanderua.service.AdvertisementService;
+import com.khpi.wanderua.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -22,7 +26,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AdvertisementController.class)
+@WebMvcTest(controllers = AdvertisementController.class,
+        excludeAutoConfiguration = {
+                RedisAutoConfiguration.class,
+                RedisRepositoriesAutoConfiguration.class
+        })
 @AutoConfigureMockMvc(addFilters = false)
 class AdvertisementControllerTest {
 
@@ -31,6 +39,12 @@ class AdvertisementControllerTest {
 
     @MockBean
     private AdvertisementService advertisementService;
+
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private SecurityHelper securityHelper;
 
     @Test
     void testGetCatalogReturnsOkAndJson() throws Exception {
