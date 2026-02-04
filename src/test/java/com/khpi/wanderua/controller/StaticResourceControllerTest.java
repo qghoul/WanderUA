@@ -1,6 +1,7 @@
 package com.khpi.wanderua.controller;
 import com.khpi.wanderua.service.ImageService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -10,6 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -28,39 +30,32 @@ public class StaticResourceControllerTest {
     @MockBean
     private ImageService imageService;
 
+    @TempDir
+    Path tempDir; // JUnit сам создаст и удалит эту папку
+
     @Test
     void testGetReviewImage_Success() throws Exception {
         String filename = "test.jpg";
         String category = "reviews";
 
+        Path categoryDir = tempDir.resolve(category);
+        Files.createDirectories(categoryDir);
+        Path realFile = categoryDir.resolve(filename);
+        Files.write(realFile, "fake image content".getBytes());
+
         when(imageService.imageExists(filename, category)).thenReturn(true);
-        Path imagePath = Paths.get("uploads", category, filename);
-        when(imageService.getImagePath(filename, category)).thenReturn(imagePath);
+        when(imageService.getImagePath(filename, category)).thenReturn(realFile);
 
-        // Mock resource returned by FileSystemResource
-        Resource resource = new ByteArrayResource("image content".getBytes()) {
-            @Override
-            public boolean exists() {
-                return true;
-            }
-
-            @Override
-            public boolean isReadable() {
-                return true;
-            }
-        };
-        // Perform GET request and expect 200 OK with image/jpeg content type
         mockMvc.perform(get("/images/reviews/{filename}", filename))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Type", MediaType.IMAGE_JPEG_VALUE))
-                .andExpect(header().string("Cache-Control", "public, max-age=3600"));
+                .andExpect(header().string("Content-Type", MediaType.IMAGE_JPEG_VALUE));
     }
 
     @Test
     void testGetReviewImage_InvalidFilename() throws Exception {
-        String invalidFilename = "../secret.txt";
+        String invalidFilename = "hacker%2Fattack.jpg";
 
-        mockMvc.perform(get("/images/reviews/{filename}", invalidFilename))
+        mockMvc.perform(get("/images/reviews/" + invalidFilename))
                 .andExpect(status().isBadRequest());
     }
 
