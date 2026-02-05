@@ -36,6 +36,7 @@ public class AdvertisementService {
     private final UserRepository userRepository;
     private final ThemeRepository themeRepository;
     private final AdvertisementImageService imageService;
+    private final AdvertisementCacheService advertisementCacheService;
 
     public Optional<Advertisement> findById(Long advertisementId){
         return advertisementRepository.findById(advertisementId);
@@ -586,13 +587,23 @@ public class AdvertisementService {
 
     @Transactional
     public AdvertisementDetailResponse getAdvertisementDetailById(Long id) {
+        //find in Redis cache
+        Optional<AdvertisementDetailResponse> cachedResponseWithDetails = advertisementCacheService.getCachedDetails(id);
+        if(cachedResponseWithDetails.isPresent()){
+            // TO DO: logic to score +1 view for this advert using Redis cache
+            log.info("Returning advertisement details from CACHE for ID: {}", id);
+            return cachedResponseWithDetails.get();
+        }
         Advertisement advertisement = advertisementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Оголошення не знайдено"));
 
-        advertisement.setViews(advertisement.getViews() + 1);
+        advertisement.setViews(advertisement.getViews() + 1); // TO REMOVE: should be redesigned using Redis cache
         advertisementRepository.save(advertisement);
 
-        return mapToDetailResponse(advertisement);
+        AdvertisementDetailResponse details = mapToDetailResponse(advertisement);
+        advertisementCacheService.cacheAdvertisementDetails(id, details);
+
+        return details;
     }
 
     private AdvertisementDetailResponse mapToDetailResponse(Advertisement advertisement) {
