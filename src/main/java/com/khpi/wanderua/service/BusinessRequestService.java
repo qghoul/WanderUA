@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 WanderUA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.khpi.wanderua.service;
 
 import com.khpi.wanderua.dto.BusinessRepresentVerifyRequest;
@@ -27,6 +43,7 @@ public class BusinessRequestService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final DocumentService documentService;
+    private final NotificationService notificationService;
 
     @Transactional
     public BusinessRequestDTO createBusinessRepresentVerifyRequest(
@@ -139,6 +156,9 @@ public class BusinessRequestService {
         verifyRequest.setAdminComment(adminComment);
         User user = verifyRequest.getUser();
 
+        String businessName = verifyRequest.getBusiness().getName();
+
+        Business businessFromUserRequest = null;
         if (confirmed) {
             user.setBusinessRepresentVerify(true);
             Set<Role> userRoles = user.getRoles();
@@ -147,17 +167,27 @@ public class BusinessRequestService {
             userRepository.save(user);
             log.info("Business represent verify request {} confirmed", verifyRequestId);
         } else {
-            Business businessFromUserRequest = verifyRequest.getBusiness();
-            verifyRequest.setBusiness(null);
-            verifyRequestRepository.save(verifyRequest);
-
+            businessFromUserRequest = verifyRequest.getBusiness();
             documentService.deleteDocumentsForVerifyRequest(verifyRequestId);
-
-            businessRepository.delete(businessFromUserRequest);
+            verifyRequest.getDocuments().clear();
+            verifyRequest.setBusiness(null);
+            log.info("Business represent verify request {} rejected", verifyRequestId);
         }
 
         VerifyRequest saved = verifyRequestRepository.save(verifyRequest);
-        return mapToVerifyRequestDTO(saved);
+        BusinessRequestDTO dto = mapToVerifyRequestDTO(saved);
+
+        if (!confirmed) {
+            businessRepository.delete(businessFromUserRequest);
+        }
+
+        notificationService.sendNotification(notificationService.createNotificationMessage(
+                businessName,
+                confirmed,
+                adminComment,
+                VerifyRequestType.BUSINESS_VERIFY));
+
+        return dto;
     }
 
     @Transactional
@@ -175,12 +205,19 @@ public class BusinessRequestService {
         verifyRequest.setConfirmed(confirmed);
         verifyRequest.setAdminComment(adminComment);
 
+         Business businessFromUserRequest = verifyRequest.getBusiness();
+
         if (confirmed) {
-            Business businessFromUserRequest = verifyRequest.getBusiness();
             businessFromUserRequest.setSustainable_verify(true);
             businessRepository.save(businessFromUserRequest);
             log.info("Business {} marked as sustainable", businessFromUserRequest.getName());
         }
+
+        notificationService.sendNotification(notificationService.createNotificationMessage(
+                businessFromUserRequest.getName(),
+                confirmed,
+                adminComment,
+                VerifyRequestType.BUSINESS_VERIFY));
 
         VerifyRequest saved = verifyRequestRepository.save(verifyRequest);
         return mapToVerifyRequestDTO(saved);
@@ -248,24 +285,17 @@ public class BusinessRequestService {
 
     @Transactional(readOnly = true)
     public List<BusinessRequestDTO> getBusinessRepresentVerifyRequestsByStatus(String status) {
-        List<VerifyRequest> verifyRequests;
-
-        switch (status.toLowerCase()) {
-            case "unresolved":
-                verifyRequests = verifyRequestRepository.findByResolvedAndTypeWithDocuments(false, VerifyRequestType.BUSINESS_VERIFY);
-                break;
-            case "resolved":
-                verifyRequests = verifyRequestRepository.findByResolvedAndTypeWithDocuments(true, VerifyRequestType.BUSINESS_VERIFY);
-                break;
-            case "confirmed":
-                verifyRequests = verifyRequestRepository.findByConfirmedAndTypeWithDocuments(true, VerifyRequestType.BUSINESS_VERIFY);
-                break;
-            case "rejected":
-                verifyRequests = verifyRequestRepository.findByConfirmedAndTypeWithDocuments(false, VerifyRequestType.BUSINESS_VERIFY);
-                break;
-            default:
-                verifyRequests = verifyRequestRepository.findByTypeWithDocuments(VerifyRequestType.BUSINESS_VERIFY);
-        }
+        List<VerifyRequest> verifyRequests = switch (status.toLowerCase()) {
+            case "unresolved" ->
+                    verifyRequestRepository.findByResolvedAndTypeWithDocuments(false, VerifyRequestType.BUSINESS_VERIFY);
+            case "resolved" ->
+                    verifyRequestRepository.findByResolvedAndTypeWithDocuments(true, VerifyRequestType.BUSINESS_VERIFY);
+            case "confirmed" ->
+                    verifyRequestRepository.findByConfirmedAndTypeWithDocuments(true, VerifyRequestType.BUSINESS_VERIFY);
+            case "rejected" ->
+                    verifyRequestRepository.findByConfirmedAndTypeWithDocuments(false, VerifyRequestType.BUSINESS_VERIFY);
+            default -> verifyRequestRepository.findByTypeWithDocuments(VerifyRequestType.BUSINESS_VERIFY);
+        };
 
         log.info("Found {} requests with status: {}", verifyRequests.size(), status);
 
@@ -276,24 +306,17 @@ public class BusinessRequestService {
 
     @Transactional(readOnly = true)
     public List<BusinessRequestDTO> getSustainabilityStatusRequestsByStatus(String status) {
-        List<VerifyRequest> verifyRequests;
-
-        switch (status.toLowerCase()) {
-            case "unresolved":
-                verifyRequests = verifyRequestRepository.findByResolvedAndTypeWithDocuments(false, VerifyRequestType.SUSTAINABLE_VERIFY);
-                break;
-            case "resolved":
-                verifyRequests = verifyRequestRepository.findByResolvedAndTypeWithDocuments(true, VerifyRequestType.SUSTAINABLE_VERIFY);
-                break;
-            case "confirmed":
-                verifyRequests = verifyRequestRepository.findByConfirmedAndTypeWithDocuments(true, VerifyRequestType.SUSTAINABLE_VERIFY);
-                break;
-            case "rejected":
-                verifyRequests = verifyRequestRepository.findByConfirmedAndTypeWithDocuments(false, VerifyRequestType.SUSTAINABLE_VERIFY);
-                break;
-            default:
-                verifyRequests = verifyRequestRepository.findByTypeWithDocuments(VerifyRequestType.SUSTAINABLE_VERIFY);
-        }
+        List<VerifyRequest> verifyRequests = switch (status.toLowerCase()) {
+            case "unresolved" ->
+                    verifyRequestRepository.findByResolvedAndTypeWithDocuments(false, VerifyRequestType.SUSTAINABLE_VERIFY);
+            case "resolved" ->
+                    verifyRequestRepository.findByResolvedAndTypeWithDocuments(true, VerifyRequestType.SUSTAINABLE_VERIFY);
+            case "confirmed" ->
+                    verifyRequestRepository.findByConfirmedAndTypeWithDocuments(true, VerifyRequestType.SUSTAINABLE_VERIFY);
+            case "rejected" ->
+                    verifyRequestRepository.findByConfirmedAndTypeWithDocuments(false, VerifyRequestType.SUSTAINABLE_VERIFY);
+            default -> verifyRequestRepository.findByTypeWithDocuments(VerifyRequestType.SUSTAINABLE_VERIFY);
+        };
 
         log.info("Found {} requests with status: {}", verifyRequests.size(), status);
 
@@ -373,5 +396,4 @@ public class BusinessRequestService {
 
         return dto;
     }
-
 }

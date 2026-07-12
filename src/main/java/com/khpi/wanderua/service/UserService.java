@@ -3,19 +3,14 @@ package com.khpi.wanderua.service;
 import com.khpi.wanderua.entity.Role;
 import com.khpi.wanderua.entity.RoleConstants;
 import com.khpi.wanderua.entity.User;
-import com.khpi.wanderua.service.ExtendedUserDetailsService;
 import com.khpi.wanderua.repository.RoleRepository;
 import com.khpi.wanderua.repository.UserRepository;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -230,7 +225,6 @@ public class UserService implements ExtendedUserDetailsService {
         return user;
     }
 
-    @PostConstruct
     public void initRoles() {
         try {
             createRoleIfNotExists(RoleConstants.ROLE_USER);
@@ -245,7 +239,6 @@ public class UserService implements ExtendedUserDetailsService {
         }
     }
 
-    @PostConstruct
     public void initAdminUser() {
         try {
             String adminEmail = "admin@wanderua.com";

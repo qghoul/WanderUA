@@ -1,6 +1,10 @@
 <#ftl encoding='UTF-8'>
 <!DOCTYPE html>
 <html lang="uk">
+<script src="/static/js/notify.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">

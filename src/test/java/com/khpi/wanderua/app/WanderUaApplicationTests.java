@@ -1,5 +1,6 @@
-package com.khpi.wanderua;
+package com.khpi.wanderua.app;
 
+import com.khpi.wanderua.app.WanderUaApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

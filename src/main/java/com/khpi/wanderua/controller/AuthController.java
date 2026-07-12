@@ -56,7 +56,7 @@ public class AuthController {
 
             if (saved) {
                 log.info("User {} registered successfully", user.getUsername());
-                return "redirect:/login.ftl?registered=true";
+                return "redirect:/login.ftl";
             } else {
                 log.warn("Registration failed for user {}: user already exists", user.getUsername());
                 return "redirect:/registration.html?error=true";

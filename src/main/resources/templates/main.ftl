@@ -3,6 +3,9 @@
 <html>
 <script src="/static/js/auth-menu.js"></script>
 <script src="/static/js/main.js"></script>
+<script src="/static/js/notify.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <head>
   <meta charset="UTF-8">
@@ -21,6 +24,7 @@
     <div class="rightPart">
       <li id="login"><a href="/login">Увійти</a></li>
       <li id="createAdd"><a href="/registration">Зареєструватись</a></li>
+      <div id="notification-container" class="notification-container"></div>
     </div>
   </ul>
 </header>

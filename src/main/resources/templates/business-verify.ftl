@@ -2,6 +2,10 @@
 <!DOCTYPE html>
 <html>
 <script src="/static/js/auth-menu.js"></script>
+<script src="/static/js/notify.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
 <head>
     <meta charset="UTF-8">
     <title>Верифікація як представник бізнесу</title>

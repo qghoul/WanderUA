@@ -117,6 +117,10 @@
 <body>
 <script src="/js/auth-menu.js"></script>
 <script src="/js/image-modal.js"></script>
+<script src="/static/js/notify.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
 
 <header>
     <ul class="menu">
